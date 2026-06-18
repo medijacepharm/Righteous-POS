@@ -1,165 +1,303 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Professional Mobile POS</title>
-  <!-- Tailwind CSS via CDN for styling -->
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <!-- HTML5 QR/Barcode Scanner Library -->
-  <script src="https://unpkg.com/html5-qrcode"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPOS Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #interactive.viewport canvas.drawingBuffer { display: none; }
+        #interactive.viewport video { width: 100%; height: auto; border-radius: 0.5rem; }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
 
-  <!-- App Header -->
-  <header class="bg-slate-800 p-4 shadow-md flex justify-between items-center border-b border-slate-700">
-    <h1 class="text-xl font-bold tracking-wide text-emerald-400">⚡ SmartPOS</h1>
-    <span class="bg-emerald-500/10 text-emerald-400 text-xs px-2 py-1 rounded font-mono">Live Session</span>
-  </header>
-
-  <!-- Main Grid Layout -->
-  <main class="flex-1 grid grid-cols-1 md:grid-cols-2 p-4 gap-4 max-w-6xl w-full mx-auto">
-    
-    <!-- Left Column: Camera Scanner & Inputs -->
-    <div class="space-y-4">
-      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-xl">
-        <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Barcode Scanner</h2>
-        <!-- Target container where camera view renders -->
-        <div id="interactive-reader" class="rounded-lg overflow-hidden bg-slate-950 border border-slate-800 aspect-video w-full"></div>
-        <button onclick="startScanner()" class="w-full mt-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 px-4 rounded-lg transition-colors shadow-lg shadow-emerald-500/20 active:scale-[0.98]">
-          📷 Initialize Rear Camera
-        </button>
-      </div>
-
-      <!-- Quick Action Simulation Input -->
-      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-xl">
-        <label class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Manual Entry / Lookup</label>
-        <div class="flex gap-2">
-          <input id="manual-barcode" type="text" placeholder="Type barcode manually..." class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500 font-mono" />
-          <button onclick="simulateScan()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg font-medium text-sm transition-colors">Add</button>
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 shadow-md">
+        <div class="max-w-md mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold text-emerald-400 flex items-center gap-2">
+                ⚡ SmartPOS <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Live</span>
+            </h1>
+            <button onclick="toggleAdminPanel()" id="adminToggleBtn" class="text-xs bg-slate-700 hover:bg-slate-600 border border-slate-600 px-3 py-1.5 rounded-lg font-medium transition">
+                ⚙️ Product Management
+            </button>
         </div>
-      </div>
+    </header>
+
+    <main class="max-w-md mx-auto p-4 space-y-4 pb-24">
+
+        <!-- ADMIN / PRODUCT MANAGEMENT PANEL (Hidden by default) -->
+        <div id="adminPanel" class="hidden bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-xl space-y-3">
+            <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                📦 Add / Update Product Inventory
+            </h2>
+            <div class="space-y-2 text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1">Barcode</label>
+                    <input id="adminBarcode" type="text" placeholder="Scan or type barcode..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Product Name</label>
+                    <input id="adminName" type="text" placeholder="e.g., iPhone 16 Pro Max Clear Case" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Retail Price ($)</label>
+                    <input id="adminPrice" type="number" step="0.01" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+                <button onclick="saveProductFromAdmin()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold p-2.5 rounded-lg transition shadow-lg mt-2">
+                    Save Product to Inventory
+                </button>
+            </div>
+        </div>
+
+        <!-- BARCODE SCANNER CAMERA VIEW -->
+        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-xl space-y-3">
+            <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Barcode Scanner</h2>
+            <div id="interactive" class="viewport relative bg-slate-950 rounded-lg overflow-hidden border border-slate-800 aspect-video flex items-center justify-center">
+                <p id="scannerPlaceholder" class="text-slate-500 text-xs italic">Camera inactive</p>
+            </div>
+            <button onclick="startScanner()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold py-3 rounded-lg transition flex items-center justify-center gap-2 shadow-lg">
+                📸 Initialize Rear Camera
+            </button>
+        </div>
+
+        <!-- MANUAL ENTRY / LOOKUP -->
+        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-xl space-y-3">
+            <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Manual Entry / Lookup</h2>
+            <div class="flex gap-2">
+                <input id="manualBarcode" type="text" placeholder="Type barcode manually..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                <button onclick="handleManualLookup()" class="bg-slate-700 hover:bg-slate-600 px-4 rounded-lg text-sm font-medium border border-slate-600 transition">Add</button>
+            </div>
+        </div>
+
+        <!-- CURRENT CART -->
+        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-xl space-y-3">
+            <div class="flex justify-between items-center">
+                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Current Cart</h2>
+                <button onclick="clearCart()" class="text-xs text-rose-400 hover:underline">Clear All</button>
+            </div>
+            <div id="cartItems" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                <p class="text-slate-500 text-xs italic text-center py-4">Scan an item or use manual entry to begin checkout</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Bottom Total Bar -->
+    <div class="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 p-4 shadow-2xl z-50">
+        <div class="max-w-md mx-auto flex justify-between items-center">
+            <div>
+                <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Total Amount</p>
+                <p id="cartTotal" class="text-2xl font-black text-emerald-400">$0.00</p>
+            </div>
+            <button onclick="checkout()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-extrabold px-6 py-3 rounded-xl transition shadow-lg text-sm tracking-wide">
+                COMPLETE SALE
+            </button>
+        </div>
     </div>
 
-    <!-- Right Column: Cart & Total Checkout -->
-    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-xl flex flex-col h-[500px] md:h-auto">
-      <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Current Cart</h2>
-      
-      <!-- Cart Items Scrollable Box -->
-      <div id="cart-list" class="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-        <!-- Empty State Message -->
-        <p id="empty-msg" class="text-slate-500 text-center py-12 text-sm italic">Scan an item or use manual entry to begin checkout</p>
-      </div>
+    <!-- AUDIO FEEDBACK -->
+    <audio id="beepAudio" src="https://assets.mixkit.co/active_storage/sfx/911/911-200.wav" preload="auto"></audio>
 
-      <!-- Checkout Calculation Area -->
-      <div class="border-t border-slate-700 pt-4 mt-4 space-y-3">
-        <div class="flex justify-between text-slate-400 text-sm">
-          <span>Subtotal</span>
-          <span id="subtotal">0.00</span>
-        </div>
-        <div class="flex justify-between text-xl font-bold border-t border-slate-700/50 pt-2 text-emerald-400">
-          <span>Total Due</span>
-          <span id="total-due">0.00</span>
-        </div>
-        <button onclick="processCheckout()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-bold py-4 px-4 rounded-lg text-center transition-all shadow-lg active:scale-[0.98]">
-          💳 Complete Transaction
-        </button>
-      </div>
-    </div>
-  </main>
+    <script>
+        // System State Manager (Uses localStorage so your items stay saved on your phone)
+        let cart = {};
+        let localInventory = JSON.parse(localStorage.getItem('pos_inventory')) || {
+            "123456": { name: "Sample Phone Case", price: 15.00 },
+            "789012": { name: "USB-C Fast Charger Cable", price: 25.00 },
+            "555555": { name: "Tempered Glass Screen Guard", price: 10.00 }
+        };
 
-  <!-- Core App Architecture & State Logic -->
-  <script>
-    // System state memory
-    let cart = {};
-    
-    // Mock Product Database matching cloud structure schemas
-    const mockProducts = {
-      "123456": { name: "Premium Phone Charger", price: 45.00 },
-      "789012": { name: "USB-C To Lightning Cable", price: 25.00 },
-      "555555": { name: "Wireless Bluetooth Earbuds", price: 120.00 }
-    };
+        function saveInventoryToStorage() {
+            localStorage.setItem('pos_inventory', JSON.stringify(localInventory));
+        }
 
-    // Initialize HTML5 Scanner Component
-    function startScanner() {
-      const html5QrCode = new Html5Qrcode("interactive-reader");
-      const config = { fps: 15, qrbox: { width: 250, height: 150 } };
+        function toggleAdminPanel() {
+            const panel = document.getElementById('adminPanel');
+            const btn = document.getElementById('adminToggleBtn');
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                btn.innerText = "❌ Close Management";
+                btn.classList.replace('bg-slate-700', 'bg-rose-950/40');
+                btn.classList.replace('border-slate-600', 'border-rose-900/50');
+            } else {
+                panel.classList.add('hidden');
+                btn.innerText = "⚙️ Product Management";
+                btn.classList.replace('bg-rose-950/40', 'bg-slate-700');
+                btn.classList.replace('border-rose-900/50', 'border-slate-600');
+            }
+        }
 
-      // Request camera with preference for environment (back camera)
-      html5QrCode.start(
-        { facingMode: "environment" }, 
-        config,
-        (decodedText) => {
-          handleItemScanned(decodedText);
-          // Briefly vibrate phone on success if supported
-          if(navigator.vibrate) navigator.vibrate(100);
-        },
-        (errorMessage) => { /* Silently catch scanning searching frames */ }
-      ).catch(err => alert("Camera permission denied or not found. Ensure HTTPS is active."));
-    }
+        function openAdminWithBarcode(barcode) {
+            document.getElementById('adminPanel').classList.remove('hidden');
+            document.getElementById('adminToggleBtn').innerText = "❌ Close Management";
+            document.getElementById('adminBarcode').value = barcode;
+            document.getElementById('adminName').focus();
+        }
 
-    function handleItemScanned(barcode) {
-      const cleanBarcode = barcode.trim();
-      const product = mockProducts[cleanBarcode] || { name: `Unknown Item (${cleanBarcode})`, price: 10.00 };
-      
-      if (cart[cleanBarcode]) {
-        cart[cleanBarcode].qty += 1;
-      } else {
-        cart[cleanBarcode] = { name: product.name, price: product.price, qty: 1 };
-      }
-      renderCart();
-    }
+        function saveProductFromAdmin() {
+            const barcode = document.getElementById('adminBarcode').value.trim();
+            const name = document.getElementById('adminName').value.trim();
+            const price = parseFloat(document.getElementById('adminPrice').value);
 
-    function simulateScan() {
-      const val = document.getElementById('manual-barcode').value;
-      if(val) {
-        handleItemScanned(val);
-        document.getElementById('manual-barcode').value = '';
-      }
-    }
+            if (!barcode || !name || isNaN(price)) {
+                alert("Please fill in all fields correctly.");
+                return;
+            }
 
-    function renderCart() {
-      const cartContainer = document.getElementById('cart-list');
-      const emptyMsg = document.getElementById('empty-msg');
-      cartContainer.innerHTML = '';
-      
-      const keys = Object.keys(cart);
-      if(keys.length === 0) {
-        emptyMsg.style.display = 'block';
-        cartContainer.appendChild(emptyMsg);
-        document.getElementById('subtotal').innerText = '0.00';
-        document.getElementById('total-due').innerText = '0.00';
-        return;
-      }
+            localInventory[barcode] = { name: name, price: price };
+            saveInventoryToStorage();
+            
+            // Clean up form
+            document.getElementById('adminBarcode').value = '';
+            document.getElementById('adminName').value = '';
+            document.getElementById('adminPrice').value = '';
+            
+            alert(`📦 Saved successfully: ${name}`);
+            
+            // Auto add to cart if it was missing
+            addToCart(barcode);
+        }
 
-      let total = 0;
-      keys.forEach(barcode => {
-        const item = cart[barcode];
-        const itemTotal = item.price * item.qty;
-        total += itemTotal;
+        function startScanner() {
+            document.getElementById('scannerPlaceholder').style.display = 'none';
+            
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector('#interactive'),
+                    constraints: {
+                        facingMode: "environment"
+                    },
+                },
+                decoder: {
+                    readers: ["ean_reader", "ean_8_reader", "code_128_reader", "code_39_reader"]
+                }
+            }, function(err) {
+                if (err) {
+                    console.error(err);
+                    alert("Camera initialization failed.");
+                    return;
+                }
+                Quagga.start();
+            });
+        }
 
-        const row = document.createElement('div');
-        row.className = 'flex justify-between items-center bg-slate-900/50 p-3 rounded-lg border border-slate-800';
-        row.innerHTML = `
-          <div>
-            <div class="font-medium text-sm text-slate-100">${item.name}</div>
-            <div class="text-xs text-slate-400 font-mono">${item.qty} x ${item.price.toFixed(2)}</div>
-          </div>
-          <div class="font-semibold text-sm text-emerald-400 font-mono">${itemTotal.toFixed(2)}</div>
-        `;
-        cartContainer.appendChild(row);
-      });
+        let lastScannedCode = null;
+        let lastScanTime = 0;
 
-      document.getElementById('subtotal').innerText = total.toFixed(2);
-      document.getElementById('total-due').innerText = total.toFixed(2);
-    }
+        Quagga.onDetected(function(result) {
+            const code = result.codeResult.code;
+            const now = Date.now();
+            
+            if (code === lastScannedCode && (now - lastScanTime < 2500)) {
+                return; // Prevent duplicate multi-scans within 2.5 seconds
+            }
+            
+            lastScannedCode = code;
+            lastScanTime = now;
+            
+            document.getElementById('beepAudio').play();
+            addToCart(code);
+        });
 
-    function processCheckout() {
-      if(Object.keys(cart).length === 0) return alert("Cart is empty!");
-      alert(`Transaction Complete!\nTotal Logged: ${document.getElementById('total-due').innerText}`);
-      cart = {};
-      renderCart();
-    }
-  </script>
+        function handleManualLookup() {
+            const input = document.getElementById('manualBarcode');
+            const barcode = input.value.trim();
+            if (barcode) {
+                addToCart(barcode);
+                input.value = '';
+            }
+        }
+
+        function addToCart(barcode) {
+            const product = localInventory[barcode];
+            
+            if (!product) {
+                const createNew = confirm(`Barcode [${barcode}] not found in inventory.\n\nWould you like to register this new product now?`);
+                if (createNew) {
+                    openAdminWithBarcode(barcode);
+                }
+                return;
+            }
+
+            if (cart[barcode]) {
+                cart[barcode].quantity += 1;
+            } else {
+                cart[barcode] = {
+                    name: product.name,
+                    price: product.price,
+                    quantity: 1
+                };
+            }
+            renderCart();
+        }
+
+        function updateQuantity(barcode, delta) {
+            if (!cart[barcode]) return;
+            cart[barcode].quantity += delta;
+            if (cart[barcode].quantity <= 0) {
+                delete cart[barcode];
+            }
+            renderCart();
+        }
+
+        function clearCart() {
+            cart = {};
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cartItems');
+            container.innerHTML = '';
+            
+            const keys = Object.keys(cart);
+            if (keys.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-xs italic text-center py-4">Scan an item or use manual entry to begin checkout</p>';
+                document.getElementById('cartTotal').innerText = '$0.00';
+                return;
+            }
+            
+            let grandTotal = 0;
+            
+            keys.forEach(barcode => {
+                const item = cart[barcode];
+                const itemTotal = item.price * item.quantity;
+                grandTotal += itemTotal;
+                
+                const row = document.createElement('div');
+                row.className = "flex items-center justify-between bg-slate-900 border border-slate-700/60 p-2.5 rounded-xl text-xs";
+                row.innerHTML = `
+                    <div class="flex-1 min-w-0 pr-2">
+                        <p class="font-semibold text-slate-200 truncate">${item.name}</p>
+                        <p class="text-slate-400 font-mono mt-0.5">$${item.price.toFixed(2)} each</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
+                            <button onclick="updateQuantity('${barcode}', -1)" class="px-2.5 py-1 hover:bg-slate-700 text-slate-300 font-bold">-</button>
+                            <span class="px-2 text-slate-100 font-mono font-bold">${item.quantity}</span>
+                            <button onclick="updateQuantity('${barcode}', 1)" class="px-2.5 py-1 hover:bg-slate-700 text-slate-300 font-bold">+</button>
+                        </div>
+                        <span class="font-mono font-bold text-slate-100 w-16 text-right">$${itemTotal.toFixed(2)}</span>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+            
+            document.getElementById('cartTotal').innerText = `$${grandTotal.toFixed(2)}`;
+        }
+
+        function checkout() {
+            if (Object.keys(cart).length === 0) {
+                alert("Your cart is empty.");
+                return;
+            }
+            alert("🎉 Sale complete! Transaction cleared.");
+            clearCart();
+        }
+    </script>
 </body>
 </html>
+
