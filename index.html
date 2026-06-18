@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartPOS Pro</title>
+    <title>SmartPOS Pro - Ghana Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -16,7 +16,7 @@
     <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 shadow-md">
         <div class="max-w-md mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold text-emerald-400 flex items-center gap-2">
-                ⚡ SmartPOS <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Pro</span>
+                ⚡ SmartPOS <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">GH Edition</span>
             </h1>
             <div class="flex gap-2">
                 <button onclick="toggleSection('salesPanel', this)" class="text-xs bg-slate-700 hover:bg-slate-600 border border-slate-600 px-2.5 py-1.5 rounded-lg font-medium transition">
@@ -43,7 +43,7 @@
                 
                 <div class="space-y-2 text-xs">
                     <a id="whatsappShareBtn" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold p-3 rounded-xl flex items-center justify-center gap-2 transition shadow-lg">
-                        💬 Share Receipt via WhatsApp
+                        💬 Share Invoice via WhatsApp
                     </a>
                     <button onclick="closeReceiptModal()" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium p-2.5 rounded-xl transition border border-slate-600">
                         Dismiss & Done
@@ -62,7 +62,7 @@
             <div class="grid grid-cols-2 gap-2 text-center">
                 <div class="bg-slate-900 border border-slate-700 p-2 rounded-lg">
                     <p class="text-[10px] text-slate-400 uppercase">Gross Revenue</p>
-                    <p id="dashRevenue" class="text-lg font-black text-emerald-400">$0.00</p>
+                    <p id="dashRevenue" class="text-lg font-black text-emerald-400">GH₵0.00</p>
                 </div>
                 <div class="bg-slate-900 border border-slate-700 p-2 rounded-lg">
                     <p class="text-[10px] text-slate-400 uppercase">Orders Settled</p>
@@ -88,7 +88,7 @@
                     <input id="adminName" type="text" placeholder="e.g., iPhone 16 Pro Max Clear Case" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-emerald-500">
                 </div>
                 <div>
-                    <label class="block text-slate-400 mb-1">Retail Price ($)</label>
+                    <label class="block text-slate-400 mb-1">Retail Price (GH₵)</label>
                     <input id="adminPrice" type="number" step="0.01" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-emerald-500">
                 </div>
                 <button onclick="saveProductFromAdmin()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold p-2.5 rounded-lg transition shadow-lg mt-2">
@@ -131,7 +131,7 @@
         <div class="max-w-md mx-auto flex justify-between items-center">
             <div>
                 <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Total Amount</p>
-                <p id="cartTotal" class="text-2xl font-black text-emerald-400">$0.00</p>
+                <p id="cartTotal" class="text-2xl font-black text-emerald-400">GH₵0.00</p>
             </div>
             <button onclick="checkoutTransaction()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-extrabold px-6 py-3 rounded-xl transition shadow-lg text-sm tracking-wide">
                 COMPLETE SALE
@@ -240,7 +240,7 @@
             const keys = Object.keys(cart);
             if (keys.length === 0) {
                 container.innerHTML = '<p class="text-slate-500 text-xs italic text-center py-4">Scan an item or use manual entry to begin checkout</p>';
-                document.getElementById('cartTotal').innerText = '$0.00';
+                document.getElementById('cartTotal').innerText = 'GH₵0.00';
                 return;
             }
             let grandTotal = 0;
@@ -251,7 +251,7 @@
                 row.innerHTML = `
                     <div class="flex-1 min-w-0 pr-2">
                         <p class="font-semibold text-slate-200 truncate">${item.name}</p>
-                        <p class="text-slate-400 font-mono mt-0.5">$${item.price.toFixed(2)} each</p>
+                        <p class="text-slate-400 font-mono mt-0.5">GH₵${item.price.toFixed(2)} each</p>
                     </div>
                     <div class="flex items-center gap-3">
                         <div class="flex items-center bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
@@ -259,15 +259,14 @@
                             <span class="px-2 text-slate-100 font-mono font-bold">${item.quantity}</span>
                             <button onclick="updateQuantity('${barcode}', 1)" class="px-2.5 py-1 hover:bg-slate-700 text-slate-300 font-bold">+</button>
                         </div>
-                        <span class="font-mono font-bold text-slate-100 w-16 text-right">$${itemTotal.toFixed(2)}</span>
+                        <span class="font-mono font-bold text-slate-100 w-20 text-right">GH₵${itemTotal.toFixed(2)}</span>
                     </div>
                 `;
                 container.appendChild(row);
             });
-            document.getElementById('cartTotal').innerText = `$${grandTotal.toFixed(2)}`;
+            document.getElementById('cartTotal').innerText = `GH₵${grandTotal.toFixed(2)}`;
         }
 
-        // --- TRANSACTION SUMMARY & INVOICE MANAGEMENT ---
         function checkoutTransaction() {
             const keys = Object.keys(cart);
             if (keys.length === 0) { alert("Your cart is empty."); return; }
@@ -281,38 +280,34 @@
                 const totalLinePrice = item.price * item.quantity;
                 transactionTotal += totalLinePrice;
                 itemsSummary.push(`${item.name} (${item.quantity}x)`);
-                
-                // Formatted plain text receipt line item
-                itemsTextLines += `${item.name.substring(0,22).padEnd(22)} x${item.quantity}  $${totalLinePrice.toFixed(2)}\n`;
+                itemsTextLines += `${item.name.substring(0,20).padEnd(20)} x${item.quantity}  GH₵${totalLinePrice.toFixed(2)}\n`;
             });
 
-            const dateStr = new Date().toLocaleDateString();
+            const dateStr = new Date().toLocaleDateString('en-GH');
             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             
-            // Build text payload layout
             const rawReceiptText = 
 `================================
       RIGHTEOUS PHONE SHOP      
 ================================
 Date: ${dateStr}   Time: ${timeStr}
 --------------------------------
-ITEMS:
+ITEMS SOLD:
 ${itemsTextLines}--------------------------------
-GRAND TOTAL:           $${transactionTotal.toFixed(2)}
+GRAND TOTAL:         GH₵${transactionTotal.toFixed(2)}
 ================================
-   Thank you for your business! 
+  Goods checked & fully verified.
+    No returns after 7 days.
+  Thank you for your business!  
 ================================`;
 
-            // Append to dashboard metrics state
             const newSale = { time: timeStr, total: transactionTotal, details: itemsSummary.join(', ') };
             salesHistory.unshift(newSale);
             saveSalesToStorage();
             renderSalesHistory();
 
-            // Populate & Trigger the Invoice Screen UI
             document.getElementById('receiptTextContainer').innerText = rawReceiptText;
             
-            // Encode receipt specifically for safe WhatsApp text delivery
             const encodedWhatsAppText = encodeURIComponent(rawReceiptText);
             document.getElementById('whatsappShareBtn').href = `https://wa.me/?text=${encodedWhatsAppText}`;
             
@@ -328,7 +323,7 @@ GRAND TOTAL:           $${transactionTotal.toFixed(2)}
             const logStack = document.getElementById('salesLogStack'); logStack.innerHTML = '';
             if (salesHistory.length === 0) {
                 logStack.innerHTML = '<p class="text-slate-500 text-xs italic text-center py-4">No transactions recorded today</p>';
-                document.getElementById('dashRevenue').innerText = '$0.00'; document.getElementById('dashCount').innerText = '0';
+                document.getElementById('dashRevenue').innerText = 'GH₵0.00'; document.getElementById('dashCount').innerText = '0';
                 return;
             }
             let totalRevenue = 0;
@@ -339,13 +334,13 @@ GRAND TOTAL:           $${transactionTotal.toFixed(2)}
                 card.innerHTML = `
                     <div class="flex justify-between font-bold text-slate-300">
                         <span class="text-slate-400 font-mono">${sale.time}</span>
-                        <span class="text-emerald-400 font-mono">$${sale.total.toFixed(2)}</span>
+                        <span class="text-emerald-400 font-mono">GH₵${sale.total.toFixed(2)}</span>
                     </div>
                     <p class="text-slate-400 italic truncate">${sale.details}</p>
                 `;
                 logStack.appendChild(card);
             });
-            document.getElementById('dashRevenue').innerText = `$${totalRevenue.toFixed(2)}`;
+            document.getElementById('dashRevenue').innerText = `GH₵${totalRevenue.toFixed(2)}`;
             document.getElementById('dashCount').innerText = salesHistory.length;
         }
 
