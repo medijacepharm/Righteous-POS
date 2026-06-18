@@ -13,7 +13,6 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
 
-    <!-- Header -->
     <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 shadow-md">
         <div class="max-w-md mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold text-emerald-400 flex items-center gap-2">
@@ -32,7 +31,27 @@
 
     <main class="max-w-md mx-auto p-4 space-y-4 pb-28">
 
-        <!-- SALES HISTORY PANEL (Hidden by default) -->
+        <div id="receiptModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-sm p-5 shadow-2xl space-y-4">
+                <div class="text-center">
+                    <div class="bg-emerald-500/10 text-emerald-400 w-12 h-12 rounded-full flex items-center justify-center mx-auto text-xl mb-2">🎉</div>
+                    <h3 class="text-base font-bold text-slate-100">Sale Successfully Logged!</h3>
+                    <p class="text-xs text-slate-400">Digital invoice summary ready</p>
+                </div>
+                
+                <div class="bg-slate-900 border border-slate-700 rounded-xl p-4 font-mono text-[11px] text-slate-300 whitespace-pre-wrap leading-relaxed shadow-inner" id="receiptTextContainer"></div>
+                
+                <div class="space-y-2 text-xs">
+                    <a id="whatsappShareBtn" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold p-3 rounded-xl flex items-center justify-center gap-2 transition shadow-lg">
+                        💬 Share Receipt via WhatsApp
+                    </a>
+                    <button onclick="closeReceiptModal()" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium p-2.5 rounded-xl transition border border-slate-600">
+                        Dismiss & Done
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div id="salesPanel" class="hidden bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-xl space-y-3">
             <div class="flex justify-between items-center">
                 <h2 class="text-sm font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -40,8 +59,6 @@
                 </h2>
                 <button onclick="clearSalesHistory()" class="text-[10px] text-rose-400 hover:underline">Reset Log</button>
             </div>
-            
-            <!-- Quick Dashboard Grid -->
             <div class="grid grid-cols-2 gap-2 text-center">
                 <div class="bg-slate-900 border border-slate-700 p-2 rounded-lg">
                     <p class="text-[10px] text-slate-400 uppercase">Gross Revenue</p>
@@ -52,14 +69,11 @@
                     <p id="dashCount" class="text-lg font-black text-amber-400">0</p>
                 </div>
             </div>
-
-            <!-- Transaction List Stack -->
             <div id="salesLogStack" class="space-y-2 max-h-48 overflow-y-auto pr-1 pt-1">
                 <p class="text-slate-500 text-xs italic text-center py-4">No transactions recorded today</p>
             </div>
         </div>
 
-        <!-- ADMIN / PRODUCT MANAGEMENT PANEL (Hidden by default) -->
         <div id="adminPanel" class="hidden bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-xl space-y-3">
             <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 📦 Add / Update Product Inventory
@@ -83,7 +97,6 @@
             </div>
         </div>
 
-        <!-- BARCODE SCANNER CAMERA VIEW -->
         <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-xl space-y-3">
             <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Barcode Scanner</h2>
             <div id="interactive" class="viewport relative bg-slate-950 rounded-lg overflow-hidden border border-slate-800 aspect-video flex items-center justify-center">
@@ -94,7 +107,6 @@
             </button>
         </div>
 
-        <!-- MANUAL ENTRY / LOOKUP -->
         <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-xl space-y-3">
             <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Manual Entry / Lookup</h2>
             <div class="flex gap-2">
@@ -103,7 +115,6 @@
             </div>
         </div>
 
-        <!-- CURRENT CART -->
         <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-xl space-y-3">
             <div class="flex justify-between items-center">
                 <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Current Cart</h2>
@@ -116,7 +127,6 @@
 
     </main>
 
-    <!-- Bottom Total Bar -->
     <div class="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 p-4 shadow-2xl z-50">
         <div class="max-w-md mx-auto flex justify-between items-center">
             <div>
@@ -129,11 +139,9 @@
         </div>
     </div>
 
-    <!-- AUDIO FEEDBACK -->
     <audio id="beepAudio" src="https://assets.mixkit.co/active_storage/sfx/911/911-200.wav" preload="auto"></audio>
 
     <script>
-        // App State Manager
         let cart = {};
         let localInventory = JSON.parse(localStorage.getItem('pos_inventory')) || {
             "123456": { name: "Sample Phone Case", price: 15.00 },
@@ -142,25 +150,16 @@
         };
         let salesHistory = JSON.parse(localStorage.getItem('pos_sales_history')) || [];
 
-        // Run dashboard render immediately on startup
         renderSalesHistory();
 
-        function saveInventoryToStorage() {
-            localStorage.setItem('pos_inventory', JSON.stringify(localInventory));
-        }
-
-        function saveSalesToStorage() {
-            localStorage.setItem('pos_sales_history', JSON.stringify(salesHistory));
-        }
+        function saveInventoryToStorage() { localStorage.setItem('pos_inventory', JSON.stringify(localInventory)); }
+        function saveSalesToStorage() { localStorage.setItem('pos_sales_history', JSON.stringify(salesHistory)); }
 
         function toggleSection(panelId, btn) {
             const panel = document.getElementById(panelId);
             const isHidden = panel.classList.contains('hidden');
-            
-            // Close other panels to preserve mobile screen real estate
             if (panelId === 'adminPanel') document.getElementById('salesPanel').classList.add('hidden');
             if (panelId === 'salesPanel') document.getElementById('adminPanel').classList.add('hidden');
-
             if (isHidden) {
                 panel.classList.remove('hidden');
                 panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -180,19 +179,12 @@
             const barcode = document.getElementById('adminBarcode').value.trim();
             const name = document.getElementById('adminName').value.trim();
             const price = parseFloat(document.getElementById('adminPrice').value);
-
-            if (!barcode || !name || isNaN(price)) {
-                alert("Please fill in all fields correctly.");
-                return;
-            }
-
+            if (!barcode || !name || isNaN(price)) { alert("Please fill in all fields correctly."); return; }
             localInventory[barcode] = { name: name, price: price };
             saveInventoryToStorage();
-            
             document.getElementById('adminBarcode').value = '';
             document.getElementById('adminName').value = '';
             document.getElementById('adminPrice').value = '';
-            
             alert(`📦 Saved successfully: ${name}`);
             addToCart(barcode);
         }
@@ -200,36 +192,19 @@
         function startScanner() {
             document.getElementById('scannerPlaceholder').style.display = 'none';
             Quagga.init({
-                inputStream: {
-                    name: "Live",
-                    type: "LiveStream",
-                    target: document.querySelector('#interactive'),
-                    constraints: { facingMode: "environment" },
-                },
-                decoder: {
-                    readers: ["ean_reader", "ean_8_reader", "code_128_reader", "code_39_reader"]
-                }
+                inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { facingMode: "environment" } },
+                decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader", "code_39_reader"] }
             }, function(err) {
-                if (err) {
-                    console.error(err);
-                    alert("Camera initialization failed.");
-                    return;
-                }
+                if (err) { console.error(err); alert("Camera initialization failed."); return; }
                 Quagga.start();
             });
         }
 
-        let lastScannedCode = null;
-        let lastScanTime = 0;
-
+        let lastScannedCode = null; let lastScanTime = 0;
         Quagga.onDetected(function(result) {
-            const code = result.codeResult.code;
-            const now = Date.now();
+            const code = result.codeResult.code; const now = Date.now();
             if (code === lastScannedCode && (now - lastScanTime < 2500)) return;
-            
-            lastScannedCode = code;
-            lastScanTime = now;
-            
+            lastScannedCode = code; lastScanTime = now;
             document.getElementById('beepAudio').play();
             addToCart(code);
         });
@@ -237,10 +212,7 @@
         function handleManualLookup() {
             const input = document.getElementById('manualBarcode');
             const barcode = input.value.trim();
-            if (barcode) {
-                addToCart(barcode);
-                input.value = '';
-            }
+            if (barcode) { addToCart(barcode); input.value = ''; }
         }
 
         function addToCart(barcode) {
@@ -250,12 +222,7 @@
                 if (createNew) openAdminWithBarcode(barcode);
                 return;
             }
-
-            if (cart[barcode]) {
-                cart[barcode].quantity += 1;
-            } else {
-                cart[barcode] = { name: product.name, price: product.price, quantity: 1 };
-            }
+            if (cart[barcode]) { cart[barcode].quantity += 1; } else { cart[barcode] = { name: product.name, price: product.price, quantity: 1 }; }
             renderCart();
         }
 
@@ -266,28 +233,19 @@
             renderCart();
         }
 
-        function clearCart() {
-            cart = {};
-            renderCart();
-        }
+        function clearCart() { cart = {}; renderCart(); }
 
         function renderCart() {
-            const container = document.getElementById('cartItems');
-            container.innerHTML = '';
+            const container = document.getElementById('cartItems'); container.innerHTML = '';
             const keys = Object.keys(cart);
-            
             if (keys.length === 0) {
                 container.innerHTML = '<p class="text-slate-500 text-xs italic text-center py-4">Scan an item or use manual entry to begin checkout</p>';
                 document.getElementById('cartTotal').innerText = '$0.00';
                 return;
             }
-            
             let grandTotal = 0;
             keys.forEach(barcode => {
-                const item = cart[barcode];
-                const itemTotal = item.price * item.quantity;
-                grandTotal += itemTotal;
-                
+                const item = cart[barcode]; const itemTotal = item.price * item.quantity; grandTotal += itemTotal;
                 const row = document.createElement('div');
                 row.className = "flex items-center justify-between bg-slate-900 border border-slate-700/60 p-2.5 rounded-xl text-xs";
                 row.innerHTML = `
@@ -309,59 +267,73 @@
             document.getElementById('cartTotal').innerText = `$${grandTotal.toFixed(2)}`;
         }
 
-        // --- SALES HISTORY & ANALYTICS WORKFLOW ---
+        // --- TRANSACTION SUMMARY & INVOICE MANAGEMENT ---
         function checkoutTransaction() {
             const keys = Object.keys(cart);
-            if (keys.length === 0) {
-                alert("Your cart is empty.");
-                return;
-            }
+            if (keys.length === 0) { alert("Your cart is empty."); return; }
 
             let transactionTotal = 0;
-            let itemsCount = 0;
+            let itemsTextLines = "";
             let itemsSummary = [];
 
             keys.forEach(barcode => {
                 const item = cart[barcode];
-                transactionTotal += item.price * item.quantity;
-                itemsCount += item.quantity;
+                const totalLinePrice = item.price * item.quantity;
+                transactionTotal += totalLinePrice;
                 itemsSummary.push(`${item.name} (${item.quantity}x)`);
+                
+                // Formatted plain text receipt line item
+                itemsTextLines += `${item.name.substring(0,22).padEnd(22)} x${item.quantity}  $${totalLinePrice.toFixed(2)}\n`;
             });
 
-            // Create Transaction Object
-            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const newSale = {
-                time: timestamp,
-                total: transactionTotal,
-                count: itemsCount,
-                details: itemsSummary.join(', ')
-            };
+            const dateStr = new Date().toLocaleDateString();
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            // Build text payload layout
+            const rawReceiptText = 
+`================================
+      RIGHTEOUS PHONE SHOP      
+================================
+Date: ${dateStr}   Time: ${timeStr}
+--------------------------------
+ITEMS:
+${itemsTextLines}--------------------------------
+GRAND TOTAL:           $${transactionTotal.toFixed(2)}
+================================
+   Thank you for your business! 
+================================`;
 
-            // Prepend to array to keep latest sale on top
+            // Append to dashboard metrics state
+            const newSale = { time: timeStr, total: transactionTotal, details: itemsSummary.join(', ') };
             salesHistory.unshift(newSale);
             saveSalesToStorage();
-            
             renderSalesHistory();
-            clearCart();
+
+            // Populate & Trigger the Invoice Screen UI
+            document.getElementById('receiptTextContainer').innerText = rawReceiptText;
             
-            alert("🎉 Transaction processed & saved to history!");
+            // Encode receipt specifically for safe WhatsApp text delivery
+            const encodedWhatsAppText = encodeURIComponent(rawReceiptText);
+            document.getElementById('whatsappShareBtn').href = `https://wa.me/?text=${encodedWhatsAppText}`;
+            
+            document.getElementById('receiptModal').classList.remove('hidden');
+            clearCart();
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receiptModal').classList.add('hidden');
         }
 
         function renderSalesHistory() {
-            const logStack = document.getElementById('salesLogStack');
-            logStack.innerHTML = '';
-
+            const logStack = document.getElementById('salesLogStack'); logStack.innerHTML = '';
             if (salesHistory.length === 0) {
                 logStack.innerHTML = '<p class="text-slate-500 text-xs italic text-center py-4">No transactions recorded today</p>';
-                document.getElementById('dashRevenue').innerText = '$0.00';
-                document.getElementById('dashCount').innerText = '0';
+                document.getElementById('dashRevenue').innerText = '$0.00'; document.getElementById('dashCount').innerText = '0';
                 return;
             }
-
             let totalRevenue = 0;
             salesHistory.forEach(sale => {
                 totalRevenue += sale.total;
-
                 const card = document.createElement('div');
                 card.className = "bg-slate-900 border border-slate-700/50 p-2 rounded-lg text-[11px] space-y-0.5";
                 card.innerHTML = `
@@ -373,16 +345,13 @@
                 `;
                 logStack.appendChild(card);
             });
-
             document.getElementById('dashRevenue').innerText = `$${totalRevenue.toFixed(2)}`;
             document.getElementById('dashCount').innerText = salesHistory.length;
         }
 
         function clearSalesHistory() {
             if (confirm("Are you sure you want to completely clear today's analytics summary?")) {
-                salesHistory = [];
-                saveSalesToStorage();
-                renderSalesHistory();
+                salesHistory = []; saveSalesToStorage(); renderSalesHistory();
             }
         }
     </script>
