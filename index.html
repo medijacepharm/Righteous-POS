@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Professional Mobile POS</title>
+  <!-- Tailwind CSS via CDN for styling -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <!-- HTML5 QR/Barcode Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+
+  <!-- App Header -->
+  <header class="bg-slate-800 p-4 shadow-md flex justify-between items-center border-b border-slate-700">
+    <h1 class="text-xl font-bold tracking-wide text-emerald-400">⚡ SmartPOS</h1>
+    <span class="bg-emerald-500/10 text-emerald-400 text-xs px-2 py-1 rounded font-mono">Live Session</span>
+  </header>
+
+  <!-- Main Grid Layout -->
+  <main class="flex-1 grid grid-cols-1 md:grid-cols-2 p-4 gap-4 max-w-6xl w-full mx-auto">
+    
+    <!-- Left Column: Camera Scanner & Inputs -->
+    <div class="space-y-4">
+      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-xl">
+        <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Barcode Scanner</h2>
+        <!-- Target container where camera view renders -->
+        <div id="interactive-reader" class="rounded-lg overflow-hidden bg-slate-950 border border-slate-800 aspect-video w-full"></div>
+        <button onclick="startScanner()" class="w-full mt-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 px-4 rounded-lg transition-colors shadow-lg shadow-emerald-500/20 active:scale-[0.98]">
+          📷 Initialize Rear Camera
+        </button>
+      </div>
+
+      <!-- Quick Action Simulation Input -->
+      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-xl">
+        <label class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Manual Entry / Lookup</label>
+        <div class="flex gap-2">
+          <input id="manual-barcode" type="text" placeholder="Type barcode manually..." class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500 font-mono" />
+          <button onclick="simulateScan()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg font-medium text-sm transition-colors">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Cart & Total Checkout -->
+    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-xl flex flex-col h-[500px] md:h-auto">
+      <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Current Cart</h2>
+      
+      <!-- Cart Items Scrollable Box -->
+      <div id="cart-list" class="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+        <!-- Empty State Message -->
+        <p id="empty-msg" class="text-slate-500 text-center py-12 text-sm italic">Scan an item or use manual entry to begin checkout</p>
+      </div>
+
+      <!-- Checkout Calculation Area -->
+      <div class="border-t border-slate-700 pt-4 mt-4 space-y-3">
+        <div class="flex justify-between text-slate-400 text-sm">
+          <span>Subtotal</span>
+          <span id="subtotal">0.00</span>
+        </div>
+        <div class="flex justify-between text-xl font-bold border-t border-slate-700/50 pt-2 text-emerald-400">
+          <span>Total Due</span>
+          <span id="total-due">0.00</span>
+        </div>
+        <button onclick="processCheckout()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-bold py-4 px-4 rounded-lg text-center transition-all shadow-lg active:scale-[0.98]">
+          💳 Complete Transaction
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Core App Architecture & State Logic -->
+  <script>
+    // System state memory
+    let cart = {};
+    
+    // Mock Product Database matching cloud structure schemas
+    const mockProducts = {
+      "123456": { name: "Premium Phone Charger", price: 45.00 },
+      "789012": { name: "USB-C To Lightning Cable", price: 25.00 },
+      "555555": { name: "Wireless Bluetooth Earbuds", price: 120.00 }
+    };
+
+    // Initialize HTML5 Scanner Component
+    function startScanner() {
+      const html5QrCode = new Html5Qrcode("interactive-reader");
+      const config = { fps: 15, qrbox: { width: 250, height: 150 } };
+
+      // Request camera with preference for environment (back camera)
+      html5QrCode.start(
+        { facingMode: "environment" }, 
+        config,
+        (decodedText) => {
+          handleItemScanned(decodedText);
+          // Briefly vibrate phone on success if supported
+          if(navigator.vibrate) navigator.vibrate(100);
+        },
+        (errorMessage) => { /* Silently catch scanning searching frames */ }
+      ).catch(err => alert("Camera permission denied or not found. Ensure HTTPS is active."));
+    }
+
+    function handleItemScanned(barcode) {
+      const cleanBarcode = barcode.trim();
+      const product = mockProducts[cleanBarcode] || { name: `Unknown Item (${cleanBarcode})`, price: 10.00 };
+      
+      if (cart[cleanBarcode]) {
+        cart[cleanBarcode].qty += 1;
+      } else {
+        cart[cleanBarcode] = { name: product.name, price: product.price, qty: 1 };
+      }
+      renderCart();
+    }
+
+    function simulateScan() {
+      const val = document.getElementById('manual-barcode').value;
+      if(val) {
+        handleItemScanned(val);
+        document.getElementById('manual-barcode').value = '';
+      }
+    }
+
+    function renderCart() {
+      const cartContainer = document.getElementById('cart-list');
+      const emptyMsg = document.getElementById('empty-msg');
+      cartContainer.innerHTML = '';
+      
+      const keys = Object.keys(cart);
+      if(keys.length === 0) {
+        emptyMsg.style.display = 'block';
+        cartContainer.appendChild(emptyMsg);
+        document.getElementById('subtotal').innerText = '0.00';
+        document.getElementById('total-due').innerText = '0.00';
+        return;
+      }
+
+      let total = 0;
+      keys.forEach(barcode => {
+        const item = cart[barcode];
+        const itemTotal = item.price * item.qty;
+        total += itemTotal;
+
+        const row = document.createElement('div');
+        row.className = 'flex justify-between items-center bg-slate-900/50 p-3 rounded-lg border border-slate-800';
+        row.innerHTML = `
+          <div>
+            <div class="font-medium text-sm text-slate-100">${item.name}</div>
+            <div class="text-xs text-slate-400 font-mono">${item.qty} x ${item.price.toFixed(2)}</div>
+          </div>
+          <div class="font-semibold text-sm text-emerald-400 font-mono">${itemTotal.toFixed(2)}</div>
+        `;
+        cartContainer.appendChild(row);
+      });
+
+      document.getElementById('subtotal').innerText = total.toFixed(2);
+      document.getElementById('total-due').innerText = total.toFixed(2);
+    }
+
+    function processCheckout() {
+      if(Object.keys(cart).length === 0) return alert("Cart is empty!");
+      alert(`Transaction Complete!\nTotal Logged: ${document.getElementById('total-due').innerText}`);
+      cart = {};
+      renderCart();
+    }
+  </script>
+</body>
+</html>
