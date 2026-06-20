@@ -1,458 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartPOS Pro - Ghana Edition</title>
-    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        #interactive.viewport canvas.drawingBuffer { display: none; }
-        #interactive.viewport video { width: 100%; height: auto; border-radius: 0.5rem; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Righteous POS Pro</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
 
-    <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 shadow-md">
-        <div class="max-w-md mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold text-emerald-400 flex items-center gap-2">
-                ⚡ SmartPOS <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">GH Edition</span>
-            </h1>
-            <div class="flex gap-2">
-                <button onclick="toggleSection('salesPanel', this)" class="text-xs bg-slate-700 hover:bg-slate-600 border border-slate-600 px-2.5 py-1.5 rounded-lg font-medium transition">
-                    📊 History
-                </button>
-                <button onclick="toggleSection('adminPanel', this)" class="text-xs bg-slate-700 hover:bg-slate-600 border border-slate-600 px-2.5 py-1.5 rounded-lg font-medium transition">
-                    ⚙️ Stock
-                </button>
-            </div>
+  <div id="login-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 9999;">
+    <div style="background: #1e293b; padding: 32px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Righteous POS <span style="background: #047857; color: #34d399; font-size: 12px; padding: 2px 6px; border-radius: 4px; margin-left: 5px;">Pro</span></h2>
+        <p style="color: #94a3b8; font-size: 14px; margin-top: 8px;">Sign in to access the system</p>
+      </div>
+
+      <div id="login-error" style="display: none; background: #7f1d1d; color: #fca5a5; padding: 10px; border-radius: 6px; font-size: 14px; margin-bottom: 16px; text-align: center;"></div>
+
+      <form id="login-form" style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="color: #cbd5e1; font-size: 14px; font-weight: 500;">Email Address</label>
+          <input type="email" id="login-email" placeholder="owner@example.com" style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 12px; color: #ffffff; font-size: 16px; outline: none;" required />
         </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="color: #cbd5e1; font-size: 14px; font-weight: 500;">Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 12px; color: #ffffff; font-size: 16px; outline: none;" required />
+        </div>
+
+        <button type="submit" id="login-btn" style="background: #10b981; color: #ffffff; border: none; border-radius: 6px; padding: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px;">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="p-4 max-w-7xl mx-auto">
+    <header class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+      <div>
+        <h1 class="text-2xl font-bold text-emerald-400">Righteous Phones & Accessories</h1>
+        <p class="text-xs text-slate-400">Point of Sale & Inventory Control</p>
+      </div>
+      <div class="text-right">
+        <span class="admin-only hidden bg-purple-900/50 text-purple-300 border border-purple-700 text-xs px-2.5 py-1 rounded-md font-semibold">Admin Mode</span>
+      </div>
     </header>
 
-    <main class="max-w-md mx-auto p-4 space-y-4 pb-28">
-
-        <div id="receiptModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-sm p-5 shadow-2xl space-y-4">
-                <div class="text-center">
-                    <div class="bg-emerald-500/10 text-emerald-400 w-12 h-12 rounded-full flex items-center justify-center mx-auto text-xl mb-2">🎉</div>
-                    <h3 class="text-base font-bold text-slate-100">Sale Successfully Logged!</h3>
-                    <p class="text-xs text-slate-400">Digital invoice summary ready</p>
-                </div>
-                
-                <div class="bg-slate-900 border border-slate-700 rounded-xl p-4 font-mono text-[11px] text-slate-300 whitespace-pre-wrap leading-relaxed shadow-inner" id="receiptTextContainer"></div>
-                
-                <div class="space-y-2 text-xs">
-                    <a id="whatsappShareBtn" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold p-3 rounded-xl flex items-center justify-center gap-2 transition shadow-lg">
-                        💬 Share Invoice via WhatsApp
-                    </a>
-                    <button onclick="closeReceiptModal()" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium p-2.5 rounded-xl transition border border-slate-600">
-                        Dismiss & Done
-                    </button>
-                </div>
-            </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:grid lg:grid-cols-1 gap-6 lg:col-span-2">
+        <div class="bg-slate-800/50 border border-slate-700/60 p-5 rounded-xl shadow-xl">
+          <h3 class="text-lg font-bold mb-4 text-slate-200">Terminal Operations</h3>
+          <p class="text-sm text-slate-400 mb-4">Your customized POS UI controls go here...</p>
         </div>
+      </div>
 
-        <div id="salesPanel" class="hidden bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-xl space-y-3">
-            <div class="flex justify-between items-center">
-                <h2 class="text-sm font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                    📊 Today's Sales Analytics
-                </h2>
-                <button onclick="clearSalesHistory()" class="text-[10px] text-rose-400 hover:underline">Reset Log</button>
-            </div>
-            <div class="grid grid-cols-2 gap-2 text-center">
-                <div class="bg-slate-900 border border-slate-700 p-2 rounded-lg">
-                    <p class="text-[10px] text-slate-400 uppercase">Gross Revenue</p>
-                    <p id="dashRevenue" class="text-lg font-black text-emerald-400">GH₵0.00</p>
-                </div>
-                <div class="bg-slate-900 border border-slate-700 p-2 rounded-lg">
-                    <p class="text-[10px] text-slate-400 uppercase">Orders Settled</p>
-                    <p id="dashCount" class="text-lg font-black text-amber-400">0</p>
-                </div>
-            </div>
-            <div id="salesLogStack" class="space-y-2 max-h-48 overflow-y-auto pr-1 pt-1">
-                <p class="text-slate-500 text-xs italic text-center py-4">No transactions recorded today</p>
-            </div>
+      <div class="bg-slate-800/50 border border-slate-700/60 p-5 rounded-xl shadow-xl">
+        <h3 class="text-lg font-bold mb-4 text-slate-200">Management Panel</h3>
+        <div class="admin-only hidden space-y-3">
+          <p class="text-xs bg-emerald-950 text-emerald-400 p-3 rounded-lg border border-emerald-800">🔒 Confirmed: Administrative system backend unlocked.</p>
         </div>
-
-        <div id="adminPanel" class="hidden bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-xl space-y-3">
-            <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                📦 Add / Update Product Inventory
-            </h2>
-            <div class="space-y-2 text-xs">
-                <div>
-                    <label class="block text-slate-400 mb-1">Barcode</label>
-                    <input id="adminBarcode" type="text" placeholder="Scan or type barcode..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-emerald-500">
-                </div>
-                <div>
-                    <label class="block text-slate-400 mb-1">Product Name</label>
-                    <input id="adminName" type="text" placeholder="e.g., iPhone 16 Pro Max Clear Case" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-emerald-500">
-                </div>
-                <div>
-                    <label class="block text-slate-400 mb-1">Retail Price (GH₵)</label>
-                    <input id="adminPrice" type="number" step="0.01" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-emerald-500">
-                </div>
-                <button onclick="saveProductFromAdmin()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold p-2.5 rounded-lg transition shadow-lg mt-2">
-                    Save Product to Inventory
-                </button>
-            </div>
-        </div>
-
-        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-xl space-y-3">
-            <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Barcode Scanner</h2>
-            <div id="interactive" class="viewport relative bg-slate-950 rounded-lg overflow-hidden border border-slate-800 aspect-video flex items-center justify-center">
-                <p id="scannerPlaceholder" class="text-slate-500 text-xs italic">Camera inactive</p>
-            </div>
-            <button onclick="startScanner()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold py-3 rounded-lg transition flex items-center justify-center gap-2 shadow-lg">
-                📸 Initialize Rear Camera
-            </button>
-        </div>
-
-        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-xl space-y-3">
-            <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Manual Entry / Lookup</h2>
-            <div class="flex gap-2">
-                <input id="manualBarcode" type="text" placeholder="Type barcode manually..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-                <button onclick="handleManualLookup()" class="bg-slate-700 hover:bg-slate-600 px-4 rounded-lg text-sm font-medium border border-slate-600 transition">Add</button>
-            </div>
-        </div>
-
-        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-xl space-y-3">
-            <div class="flex justify-between items-center">
-                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Current Cart</h2>
-                <button onclick="clearCart()" class="text-xs text-rose-400 hover:underline">Clear All</button>
-            </div>
-            <div id="cartItems" class="space-y-2 max-h-60 overflow-y-auto pr-1">
-                <p class="text-slate-500 text-xs italic text-center py-4">Scan an item or use manual entry to begin checkout</p>
-            </div>
-        </div>
-
-    </main>
-
-    <div class="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 p-4 shadow-2xl z-50">
-        <div class="max-w-md mx-auto flex justify-between items-center">
-            <div>
-                <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Total Amount</p>
-                <p id="cartTotal" class="text-2xl font-black text-emerald-400">GH₵0.00</p>
-            </div>
-            <button onclick="checkoutTransaction()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-extrabold px-6 py-3 rounded-xl transition shadow-lg text-sm tracking-wide">
-                COMPLETE SALE
-            </button>
-        </div>
+        <p class="text-slate-500 text-sm mt-2">Standard cashier view defaults enabled.</p>
+      </div>
     </div>
+  </div>
 
-    <audio id="beepAudio" src="https://assets.mixkit.co/active_storage/sfx/911/911-200.wav" preload="auto"></audio>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    
+    const SUPABASE_URL = 'https://ezdpxjjzemtxbmjyjmfi.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6ZHB4amp6ZW10eGJtanlqbWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzY5NDYsImV4cCI6MjA5NzM1Mjk0Nn0.ADcwJuefJxBC2h4iQHsTZ_Nixmlql_cGgGTIucxxgDw'; 
+    
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    <script>
-        let cart = {};
-        let localInventory = JSON.parse(localStorage.getItem('pos_inventory')) || {
-            "123456": { name: "Sample Phone Case", price: 15.00 },
-            "789012": { name: "USB-C Fast Charger Cable", price: 25.00 },
-            "555555": { name: "Tempered Glass Screen Guard", price: 10.00 }
-        };
-        let salesHistory = JSON.parse(localStorage.getItem('pos_sales_history')) || [];
+    const overlay = document.getElementById('login-overlay');
+    const form = document.getElementById('login-form');
+    const errorBox = document.getElementById('login-error');
+    const loginBtn = document.getElementById('login-btn');
 
-        renderSalesHistory();
-
-        function saveInventoryToStorage() { localStorage.setItem('pos_inventory', JSON.stringify(localInventory)); }
-        function saveSalesToStorage() { localStorage.setItem('pos_sales_history', JSON.stringify(salesHistory)); }
-
-        function toggleSection(panelId, btn) {
-            const panel = document.getElementById(panelId);
-            const isHidden = panel.classList.contains('hidden');
-            if (panelId === 'adminPanel') document.getElementById('salesPanel').classList.add('hidden');
-            if (panelId === 'salesPanel') document.getElementById('adminPanel').classList.add('hidden');
-            if (isHidden) {
-                panel.classList.remove('hidden');
-                panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } else {
-                panel.classList.add('hidden');
-            }
+    async function checkUser() {
+      try {
+        const { data: { session } } = await db.auth.getSession();
+        if (session) {
+          overlay.style.display = 'none';
+          fetchUserRole(session.user.id);
         }
+      } catch (err) {
+        console.error(err);
+      }
+    }
 
-        function openAdminWithBarcode(barcode) {
-            document.getElementById('adminPanel').classList.remove('hidden');
-            document.getElementById('salesPanel').classList.add('hidden');
-            document.getElementById('adminBarcode').value = barcode;
-            document.getElementById('adminName').focus();
+    async function fetchUserRole(userId) {
+      try {
+        const { data } = await db
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+
+        const role = data?.role || 'cashier';
+        
+        if (role !== 'admin') {
+          document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+        } else {
+          document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
         }
+      } catch (err) {
+        console.error(err);
+      }
+    }
 
-        function saveProductFromAdmin() {
-            const barcode = document.getElementById('adminBarcode').value.trim();
-            const name = document.getElementById('adminName').value.trim();
-            const price = parseFloat(document.getElementById('adminPrice').value);
-            if (!barcode || !name || isNaN(price)) { alert("Please fill in all fields correctly."); return; }
-            localInventory[barcode] = { name: name, price: price };
-            saveInventoryToStorage();
-            document.getElementById('adminBarcode').value = '';
-            document.getElementById('adminName').value = '';
-            document.getElementById('adminPrice').value = '';
-            alert(`📦 Saved successfully: ${name}`);
-            addToCart(barcode);
-        }
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      loginBtn.innerText = 'Authenticating...';
+      loginBtn.disabled = true;
+      errorBox.style.display = 'none';
 
-        function startScanner() {
-            document.getElementById('scannerPlaceholder').style.display = 'none';
-            Quagga.init({
-                inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { facingMode: "environment" } },
-                decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader", "code_39_reader"] }
-            }, function(err) {
-                if (err) { console.error(err); alert("Camera initialization failed."); return; }
-                Quagga.start();
-            });
-        }
+      try {
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
 
-        let lastScannedCode = null; let lastScanTime = 0;
-        Quagga.onDetected(function(result) {
-            const code = result.codeResult.code; const now = Date.now();
-            if (code === lastScannedCode && (now - lastScanTime < 2500)) return;
-            lastScannedCode = code; lastScanTime = now;
-            document.getElementById('beepAudio').play();
-            addToCart(code);
+        const { data, error } = await db.auth.signInWithPassword({
+          email: email,
+          password: password,
         });
 
-        function handleManualLookup() {
-            const input = document.getElementById('manualBarcode');
-            const barcode = input.value.trim();
-            if (barcode) { addToCart(barcode); input.value = ''; }
+        if (error) {
+          errorBox.innerText = '⚠️ ' + error.message;
+          errorBox.style.display = 'block';
+          loginBtn.innerText = 'Sign In';
+          loginBtn.disabled = false;
+        } else {
+          overlay.style.display = 'none';
+          fetchUserRole(data.user.id);
         }
-
-        function addToCart(barcode) {
-            const product = localInventory[barcode];
-            if (!product) {
-                const createNew = confirm(`Barcode [${barcode}] not found in inventory.\n\nRegister this product?`);
-                if (createNew) openAdminWithBarcode(barcode);
-                return;
-            }
-            if (cart[barcode]) { cart[barcode].quantity += 1; } else { cart[barcode] = { name: product.name, price: product.price, quantity: 1 }; }
-            renderCart();
-        }
-
-        function updateQuantity(barcode, delta) {
-            if (!cart[barcode]) return;
-            cart[barcode].quantity += delta;
-            if (cart[barcode].quantity <= 0) delete cart[barcode];
-            renderCart();
-        }
-
-        function clearCart() { cart = {}; renderCart(); }
-
-        function renderCart() {
-            const container = document.getElementById('cartItems'); container.innerHTML = '';
-            const keys = Object.keys(cart);
-            if (keys.length === 0) {
-                container.innerHTML = '<p class="text-slate-500 text-xs italic text-center py-4">Scan an item or use manual entry to begin checkout</p>';
-                document.getElementById('cartTotal').innerText = 'GH₵0.00';
-                return;
-            }
-            let grandTotal = 0;
-            keys.forEach(barcode => {
-                const item = cart[barcode]; const itemTotal = item.price * item.quantity; grandTotal += itemTotal;
-                const row = document.createElement('div');
-                row.className = "flex items-center justify-between bg-slate-900 border border-slate-700/60 p-2.5 rounded-xl text-xs";
-                row.innerHTML = `
-                    <div class="flex-1 min-w-0 pr-2">
-                        <p class="font-semibold text-slate-200 truncate">${item.name}</p>
-                        <p class="text-slate-400 font-mono mt-0.5">GH₵${item.price.toFixed(2)} each</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <div class="flex items-center bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
-                            <button onclick="updateQuantity('${barcode}', -1)" class="px-2.5 py-1 hover:bg-slate-700 text-slate-300 font-bold">-</button>
-                            <span class="px-2 text-slate-100 font-mono font-bold">${item.quantity}</span>
-                            <button onclick="updateQuantity('${barcode}', 1)" class="px-2.5 py-1 hover:bg-slate-700 text-slate-300 font-bold">+</button>
-                        </div>
-                        <span class="font-mono font-bold text-slate-100 w-20 text-right">GH₵${itemTotal.toFixed(2)}</span>
-                    </div>
-                `;
-                container.appendChild(row);
-            });
-            document.getElementById('cartTotal').innerText = `GH₵${grandTotal.toFixed(2)}`;
-        }
-
-        function checkoutTransaction() {
-            const keys = Object.keys(cart);
-            if (keys.length === 0) { alert("Your cart is empty."); return; }
-
-            let transactionTotal = 0;
-            let itemsTextLines = "";
-            let itemsSummary = [];
-
-            keys.forEach(barcode => {
-                const item = cart[barcode];
-                const totalLinePrice = item.price * item.quantity;
-                transactionTotal += totalLinePrice;
-                itemsSummary.push(`${item.name} (${item.quantity}x)`);
-                itemsTextLines += `${item.name.substring(0,20).padEnd(20)} x${item.quantity}  GH₵${totalLinePrice.toFixed(2)}\n`;
-            });
-
-            const dateStr = new Date().toLocaleDateString('en-GH');
-            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-            const rawReceiptText = 
-`================================
-      RIGHTEOUS PHONE SHOP      
-================================
-Date: ${dateStr}   Time: ${timeStr}
---------------------------------
-ITEMS SOLD:
-${itemsTextLines}--------------------------------
-GRAND TOTAL:         GH₵${transactionTotal.toFixed(2)}
-================================
-  Goods checked & fully verified.
-    No returns after 7 days.
-  Thank you for your business!  
-================================`;
-
-            const newSale = { time: timeStr, total: transactionTotal, details: itemsSummary.join(', ') };
-            salesHistory.unshift(newSale);
-            saveSalesToStorage();
-            renderSalesHistory();
-
-            document.getElementById('receiptTextContainer').innerText = rawReceiptText;
-            
-            const encodedWhatsAppText = encodeURIComponent(rawReceiptText);
-            document.getElementById('whatsappShareBtn').href = `https://wa.me/?text=${encodedWhatsAppText}`;
-            
-            document.getElementById('receiptModal').classList.remove('hidden');
-            clearCart();
-        }
-
-        function closeReceiptModal() {
-            document.getElementById('receiptModal').classList.add('hidden');
-        }
-
-        function renderSalesHistory() {
-            const logStack = document.getElementById('salesLogStack'); logStack.innerHTML = '';
-            if (salesHistory.length === 0) {
-                logStack.innerHTML = '<p class="text-slate-500 text-xs italic text-center py-4">No transactions recorded today</p>';
-                document.getElementById('dashRevenue').innerText = 'GH₵0.00'; document.getElementById('dashCount').innerText = '0';
-                return;
-            }
-            let totalRevenue = 0;
-            salesHistory.forEach(sale => {
-                totalRevenue += sale.total;
-                const card = document.createElement('div');
-                card.className = "bg-slate-900 border border-slate-700/50 p-2 rounded-lg text-[11px] space-y-0.5";
-                card.innerHTML = `
-                    <div class="flex justify-between font-bold text-slate-300">
-                        <span class="text-slate-400 font-mono">${sale.time}</span>
-                        <span class="text-emerald-400 font-mono">GH₵${sale.total.toFixed(2)}</span>
-                    </div>
-                    <p class="text-slate-400 italic truncate">${sale.details}</p>
-                `;
-                logStack.appendChild(card);
-            });
-            document.getElementById('dashRevenue').innerText = `GH₵${totalRevenue.toFixed(2)}`;
-            document.getElementById('dashCount').innerText = salesHistory.length;
-        }
-
-        function clearSalesHistory() {
-            if (confirm("Are you sure you want to completely clear today's analytics summary?")) {
-                salesHistory = []; saveSalesToStorage(); renderSalesHistory();
-            }
-        }
-    </script>
-    <div id="login-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 9999; font-family: system-ui, sans-serif;">
-  <div style="background: #1e293b; padding: 32px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
-    <div style="text-align: center; margin-bottom: 24px;">
-      <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Righteous POS <span style="background: #047857; color: #34d399; font-size: 12px; padding: 2px 6px; border-radius: 4px; margin-left: 5px;">Pro</span></h2>
-      <p style="color: #94a3b8; font-size: 14px; margin-top: 8px;">Sign in to access the system</p>
-    </div>
-
-    <div id="login-error" style="display: none; background: #7f1d1d; color: #fca5a5; padding: 10px; border-radius: 6px; font-size: 14px; margin-bottom: 16px; text-align: center;"></div>
-
-    <form id="login-form" style="display: flex; flex-direction: column; gap: 16px;">
-      <div style="display: flex; flex-direction: column; gap: 6px;">
-        <label style="color: #cbd5e1; font-size: 14px; font-weight: 500;">Email Address</label>
-        <input type="email" id="login-email" placeholder="owner@example.com" style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 12px; color: #ffffff; font-size: 16px; outline: none;" required />
-      </div>
-
-      <div style="display: flex; flex-direction: column; gap: 6px;">
-        <label style="color: #cbd5e1; font-size: 14px; font-weight: 500;">Password</label>
-        <input type="password" id="login-password" placeholder="••••••••" style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 12px; color: #ffffff; font-size: 16px; outline: none;" required />
-      </div>
-
-      <button type="submit" id="login-btn" style="background: #10b981; color: #ffffff; border: none; border-radius: 6px; padding: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px;">Sign In</button>
-    </form>
-  </div>
-</div>
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-  
-  const SUPABASE_URL = 'https://ezdpxjjzemtxbmjyjmfi.supabase.co'; 
-  const SUPABASE_ANON_KEY = 'EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6ZHB4amp6ZW10eGJtanlqbWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzY5NDYsImV4cCI6MjA5NzM1Mjk0Nn0.ADcwJuefJxBC2h4iQHsTZ_Nixmlql_cGgGTIucxxgDw'; 
-  
-  const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  const overlay = document.getElementById('login-overlay');
-  const form = document.getElementById('login-form');
-  const errorBox = document.getElementById('login-error');
-  const loginBtn = document.getElementById('login-btn');
-
-  async function checkUser() {
-    try {
-      const { data: { session } } = await db.auth.getSession();
-      if (session) {
-        overlay.style.display = 'none';
-        fetchUserRole(session.user.id);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  async function fetchUserRole(userId) {
-    try {
-      const { data } = await db
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .single();
-
-      const role = data?.role || 'cashier';
-      
-      if (role !== 'admin') {
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-      } else {
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    loginBtn.innerText = 'Authenticating...';
-    loginBtn.disabled = true;
-    errorBox.style.display = 'none';
-
-    try {
-      const email = document.getElementById('login-email').value.trim();
-      const password = document.getElementById('login-password').value;
-
-      const { data, error } = await db.auth.signInWithPassword({
-        email: email,
-        password: password,
-      });
-
-      if (error) {
-        errorBox.innerText = '⚠️ ' + error.message;
-        errorBox.style.display = 'block';
+      } catch (err) {
+        alert("System Error: " + err.message);
         loginBtn.innerText = 'Sign In';
         loginBtn.disabled = false;
-      } else {
-        overlay.style.display = 'none';
-        fetchUserRole(data.user.id);
       }
-    } catch (err) {
-      alert("System Error: " + err.message);
-      loginBtn.innerText = 'Sign In';
-      loginBtn.disabled = false;
-    }
-  });
+    });
 
-  checkUser();
-</script>
-
-            </body> 
-       </html>
- 
+    checkUser();
+  </script>
+</body>
+</html>
