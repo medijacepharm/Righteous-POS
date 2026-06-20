@@ -350,5 +350,101 @@ GRAND TOTAL:         GH₵${transactionTotal.toFixed(2)}
             }
         }
     </script>
+    <!-- Secure Login Overlay -->
+<div id="login-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 9999; font-family: system-ui, sans-serif;">
+  <div style="background: #1e293b; padding: 32px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
+    <div style="text-align: center; margin-bottom: 24px;">
+      <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Righteous POS <span style="background: #047857; color: #34d399; font-size: 12px; padding: 2px 6px; border-radius: 4px; margin-left: 5px;">Pro</span></h2>
+      <p style="color: #94a3b8; font-size: 14px; margin-top: 8px;">Sign in to access the system</p>
+    </div>
+
+    <div id="login-error" style="display: none; background: #7f1d1d; color: #fca5a5; padding: 10px; border-radius: 6px; font-size: 14px; margin-bottom: 16px; text-align: center;"></div>
+
+    <form id="login-form" style="display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="color: #cbd5e1; font-size: 14px; font-weight: 500;">Email Address</label>
+        <input type="email" id="login-email" placeholder="owner@example.com" style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 12px; color: #ffffff; font-size: 16px; outline: none;" required />
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="color: #cbd5e1; font-size: 14px; font-weight: 500;">Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 12px; color: #ffffff; font-size: 16px; outline: none;" required />
+      </div>
+
+      <button type="submit" id="login-btn" style="background: #10b981; color: #ffffff; border: none; border-radius: 6px; padding: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px;">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<!-- Supabase Logic Connection -->
+<script type="module">
+  // NOTE: If you haven't imported Supabase in your file yet, uncomment the line below:
+  // import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+  
+  // Make sure your window.supabase client is initialized somewhere above this script!
+  const supabaseClient = window.supabase; 
+
+  const overlay = document.getElementById('login-overlay');
+  const form = document.getElementById('login-form');
+  const errorBox = document.getElementById('login-error');
+  const loginBtn = document.getElementById('login-btn');
+
+  // Check if a user is already logged in when page loads
+  async function checkUser() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+      overlay.style.display = 'none'; // Hide login if session exists
+      fetchUserRole(session.user.id);
+    }
+  }
+
+  // Fetch role and adjust visibility of elements based on admin/cashier status
+  async function fetchUserRole(userId) {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    const role = data?.role || 'cashier';
+    
+    if (role !== 'admin') {
+      // 💡 Put any custom hiding logic here for non-admins!
+      // Example: document.getElementById('admin-settings-btn').style.display = 'none';
+      console.log("Logged in as Cashier. Admin controls hidden.");
+    } else {
+      console.log("Logged in as Admin. Full privileges enabled.");
+    }
+  }
+
+  // Handle Form Submission
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginBtn.innerText = 'Authenticating...';
+    loginBtn.disabled = true;
+    errorBox.style.display = 'none';
+
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password,
+    });
+
+    if (error) {
+      errorBox.innerText = '⚠️ ' + error.message;
+      errorBox.style.display = 'block';
+      loginBtn.innerText = 'Sign In';
+      loginBtn.disabled = false;
+    } else {
+      overlay.style.display = 'none';
+      fetchUserRole(data.user.id);
+    }
+  });
+
+  // Run session check on startup
+  checkUser();
+</script>
 </body>
 </html>
