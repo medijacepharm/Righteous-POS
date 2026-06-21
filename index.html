@@ -4,10 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Righteous POS Pro</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
 
+  <!-- Secure Login Overlay -->
   <div id="login-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 9999;">
     <div style="background: #1e293b; padding: 32px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
       <div style="text-align: center; margin-bottom: 24px;">
@@ -33,6 +35,7 @@
     </div>
   </div>
 
+  <!-- Main POS Application Layout Dashboard -->
   <div class="p-4 max-w-7xl mx-auto">
     <header class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
       <div>
@@ -46,7 +49,9 @@
     </header>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left 2 Columns: Live Product Catalog Grid & Search -->
       <div class="lg:col-span-2 space-y-4">
+        <!-- Search Bar Header Block -->
         <div class="bg-slate-800/40 border border-slate-700/50 p-3 rounded-xl flex items-center gap-3">
           <span class="text-slate-400 pl-1">🔍</span>
           <input type="text" id="search-bar" placeholder="Search catalog by name or barcode..." class="w-full bg-transparent text-sm text-white outline-none placeholder-slate-500" />
@@ -60,12 +65,15 @@
           </div>
           
           <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            </div>
+            <!-- JavaScript dynamically renders catalog items here -->
+          </div>
         </div>
       </div>
 
+      <!-- Right Column: Interactive Basket & Management Forms -->
       <div class="space-y-6">
         
+        <!-- Live Checkout Counter Basket Panel -->
         <div class="bg-slate-800/70 border border-slate-600/50 p-5 rounded-xl shadow-2xl flex flex-col justify-between min-h-[350px]">
           <div>
             <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-3">
@@ -75,11 +83,13 @@
               <button id="clear-basket-btn" class="text-[10px] bg-slate-900 text-slate-400 hover:text-red-400 border border-slate-700 px-2 py-0.5 rounded transition">Clear All</button>
             </div>
 
+            <!-- Dynamic Basket Items Injection Queue -->
             <div id="basket-items-container" class="space-y-2 max-h-[220px] overflow-y-auto pr-1 text-xs">
               <p class="text-slate-500 text-center py-8 italic">Basket is empty. Tap products to add.</p>
             </div>
           </div>
 
+          <!-- Total Calculation and Action Footings -->
           <div class="border-t border-slate-700 pt-3 mt-4 space-y-3">
             <div class="flex justify-between items-center font-bold text-base">
               <span class="text-slate-300">Total Bill:</span>
@@ -91,6 +101,7 @@
           </div>
         </div>
 
+        <!-- Management Panel (Stock Intake Admin Controls) -->
         <div class="bg-slate-800/50 border border-slate-700/60 p-5 rounded-xl shadow-xl h-fit">
           <h3 class="text-sm font-bold mb-3 text-slate-300">System Management</h3>
           
@@ -131,6 +142,7 @@
     </div>
   </div>
 
+  <!-- Supabase Core System Logic Integration -->
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
     
@@ -386,7 +398,6 @@
           const { stock, cleanBarcode } = parsePackedBarcode(originalProduct.barcode);
           const updatedStockValue = Math.max(0, stock - basketItem.quantity);
           
-          // Uniform serialization structure used moving forward
           const newlyPackedBarcode = `${updatedStockValue}|||${cleanBarcode}`;
 
           const { error } = await db
@@ -405,7 +416,7 @@
 
       } catch (err) {
         alert("Checkout Sync Interrupted: " + err.message);
-      } lazy {
+      } finally {
         checkoutBtn.innerText = "Complete Order & Log Sale";
         checkoutBtn.disabled = false;
       }
