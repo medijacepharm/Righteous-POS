@@ -83,11 +83,6 @@
               </div>
             </div>
 
-            <div>
-              <label class="block text-xs text-slate-400 mb-1">Barcode / SKU</label>
-              <input type="text" id="prod-sku" placeholder="Optional barcode string" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white outline-none" />
-            </div>
-
             <button type="submit" id="add-product-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 px-4 rounded transition mt-2">Add to System Inventory</button>
           </form>
         </div>
@@ -173,7 +168,6 @@
           <div class="bg-slate-900/60 hover:bg-slate-900 border border-slate-700/80 p-3 rounded-lg flex flex-col justify-between cursor-pointer transition shadow hover:shadow-emerald-950/20 group">
             <div>
               <h4 class="font-medium text-slate-200 group-hover:text-emerald-400 text-sm transition line-clamp-2">${product.name}</h4>
-              <p class="text-xs text-slate-500 mt-0.5">SKU: ${product.sku || 'N/A'}</p>
             </div>
             <div class="flex justify-between items-center mt-3 pt-2 border-t border-slate-800">
               <span class="text-sm font-bold text-emerald-400">GH₵ ${parseFloat(product.price).toFixed(2)}</span>
@@ -187,7 +181,7 @@
         console.error(err);
         productsGrid.innerHTML = `
           <div class="col-span-full text-center p-6 bg-red-950/20 rounded-lg border border-dashed border-red-900 text-red-300 text-xs">
-            ⚠️ Database Sync Notice: Ensure table permits public row insertion values.
+            ⚠️ Database Sync Notice: Verify structural credentials match database criteria.
           </div>`;
         loadingStatus.innerText = "Sync failure";
       }
@@ -203,20 +197,17 @@
         const name = document.getElementById('prod-name').value.trim();
         const price = parseFloat(document.getElementById('prod-price').value);
         const stock = parseInt(document.getElementById('prod-stock').value);
-        const sku = document.getElementById('prod-sku').value.trim() || null;
 
         const { error } = await db
           .from('products')
-          .insert([{ name, price, stock, sku }]);
+          .insert([{ name, price, stock }]);
 
         if (error) throw error;
 
-        // Reset the input values for next entry
         productForm.reset();
         addProductBtn.innerText = 'Add to System Inventory';
         addProductBtn.disabled = false;
         
-        // Instant list reload
         loadProducts();
       } catch (err) {
         alert("Insert Failed: " + err.message);
