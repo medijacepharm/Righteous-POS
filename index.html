@@ -135,7 +135,7 @@
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
     
     const SUPABASE_URL = 'https://ezdpxjjzemtxbmjyjmfi.supabase.co'; 
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6ZHB4amp6ZW10eGJtanlqbWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3IDE3NzY5NDYsImV4cCI6MjA5NzM1Mjk0Nn0.ADcwJuefJxBC2h4iQHsTZ_Nixmlql_cGgGTIucxxgDw'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6ZHB4amp6ZW10eGJtanlqbWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzY5NDYsImV4cCI6MjA5NzM1Mjk0Nn0.ADcwJuefJxBC2h4iQHsTZ_Nixmlql_cGgGTIucxxgDw'; 
     
     const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -376,22 +376,18 @@
       checkoutBtn.disabled = true;
 
       try {
-        // Run updates sequentially across all items inside your receipt array
         for (const basketItem of salesBasket) {
           const originalProduct = allProducts.find(p => p.id === basketItem.id);
           if (!originalProduct) continue;
 
-          // Extract barcode string part cleanly
           let cleanBarcodeStr = originalProduct.barcode;
           if (cleanBarcodeStr.includes('|||')) {
             cleanBarcodeStr = cleanBarcodeStr.split('|||')[1];
           }
 
-          // Compute new structural volume parameters safely
           const updatedStockValue = Math.max(0, basketItem.maxStock - basketItem.quantity);
           const newlyPackedBarcode = `${updatedStockValue}|||${cleanBarcodeStr}`;
 
-          // Fire atomic update statement to update Supabase row data
           const { error } = await db
             .from('products')
             .update({ barcode: newlyPackedBarcode })
@@ -404,7 +400,7 @@
         
         salesBasket = [];
         updateBasketUI();
-        await loadProducts(); // Re-trigger live layout sync automatically
+        await loadProducts(); 
 
       } catch (err) {
         alert("Checkout Sync Interrupted: " + err.message);
