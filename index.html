@@ -79,7 +79,7 @@
               </div>
               <div>
                 <label class="block text-xs text-slate-400 mb-1">Stock Qty</label>
-                <input type="number" id="prod-stock" placeholder="10" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white outline-none" required />
+                <input type="number" id="prod-stock" value="10" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white outline-none" required />
               </div>
             </div>
 
@@ -170,19 +170,28 @@
         }
 
         productsGrid.innerHTML = products.map(product => {
-          // Dynamic safety matching for alternate database stock names
-          const finalStock = product.stock !== undefined ? product.stock : (product.quantity !== undefined ? product.quantity : 0);
-          const finalBarcode = product.barcode || product.sku || 'N/A';
+          let displayStock = 0;
+          let displayBarcode = 'N/A';
+          
+          // Parse string format (e.g. "12_BC-99831") if applicable
+          if (product.barcode && product.barcode.includes('_')) {
+            const parts = product.barcode.split('_');
+            displayStock = parseInt(parts[0]) || 0;
+            displayBarcode = parts.slice(1).join('_');
+          } else {
+            displayBarcode = product.barcode || 'N/A';
+            displayStock = 1; // Default fallback if data format differs
+          }
           
           return `
             <div class="bg-slate-900/60 hover:bg-slate-900 border border-slate-700/80 p-3 rounded-lg flex flex-col justify-between cursor-pointer transition shadow hover:shadow-emerald-950/20 group">
               <div>
                 <h4 class="font-medium text-slate-200 group-hover:text-emerald-400 text-sm transition line-clamp-2">${product.name}</h4>
-                <p class="text-[10px] text-slate-500 mt-0.5">BC: ${finalBarcode}</p>
+                <p class="text-[10px] text-slate-500 mt-0.5">Barcode: ${displayBarcode}</p>
               </div>
               <div class="flex justify-between items-center mt-3 pt-2 border-t border-slate-800">
                 <span class="text-sm font-bold text-emerald-400">GH₵ ${parseFloat(product.price).toFixed(2)}</span>
-                <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded ${finalStock <= 5 ? 'text-amber-400 bg-amber-950/30' : ''}">Qty: ${finalStock}</span>
+                <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded ${displayStock <= 3 ? 'text-amber-400 bg-amber-950/40' : ''}">Qty: ${displayStock}</span>
               </div>
             </div>
           `;
@@ -193,13 +202,13 @@
         console.error(err);
         productsGrid.innerHTML = `
           <div class="col-span-full text-center p-6 bg-red-950/20 rounded-lg border border-dashed border-red-900 text-red-300 text-xs">
-            ⚠️ Database Sync Notice: Verify structural credentials match database criteria.
+            ⚠️ Database Sync Notice. Check interface data parameters.
           </div>`;
         loadingStatus.innerText = "Sync failure";
       }
     }
 
-    // Admin Stock Form Interceptor
+    // Form submission processing
     productForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       addProductBtn.innerText = 'Saving Item...';
@@ -208,43 +217,28 @@
       try {
         const name = document.getElementById('prod-name').value.trim();
         const price = parseFloat(document.getElementById('prod-price').value);
-        const stockInput = parseInt(document.getElementById('prod-stock').value);
+        const stockQty = parseInt(document.getElementById('prod-stock').value) || 0;
         
-        // Use provided barcode, or auto-generate a fallback string to satisfy the NOT-NULL database constraint
-        let barcode = document.getElementById('prod-barcode').value.trim();
-        if (!barcode) {
-          barcode = 'BC-' + Math.floor(100000 + Math.random() * 900000);
+        let barcodeInput = document.getElementById('prod-barcode').value.trim();
+        if (!barcodeInput) {
+          barcodeInput = 'BC-' + Math.floor(100000 + Math.random() * 900000);
         }
 
-        // Create the initial baseline entry payload
-        const insertPayload = { 
-          name: name, 
-          price: price, 
-          barcode: barcode 
-        };
-
-        // Double-check alignment if column is explicitly mapped to 'stock' or fallback 'quantity'
-        insertPayload.stock = stockInput;
+        // Pack stockQty cleanly directly into the required barcode column string
+        const packedBarcode = `${stockQty}_${barcodeInput}`;
 
         const { error } = await db
           .from('products')
-          .insert([insertPayload]);
+          .insert([{ 
+            name: name, 
+            price: price, 
+            barcode: packedBarcode 
+          }]);
 
-        // Smart Adaptive Fallback: If your database uses 'quantity' instead of 'stock' as its column title
-        if (error && error.message.includes("column 'stock' does not exist")) {
-          delete insertPayload.stock;
-          insertPayload.quantity = stockInput;
-          
-          const { error: retryError } = await db
-            .from('products')
-            .insert([insertPayload]);
-            
-          if (retryError) throw retryError;
-        } else if (error) {
-          throw error;
-        }
+        if (error) throw error;
 
         productForm.reset();
+        document.getElementById('prod-stock').value = "10"; // restore layout default
         addProductBtn.innerText = 'Add to System Inventory';
         addProductBtn.disabled = false;
         
