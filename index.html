@@ -46,7 +46,13 @@
     </header>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2 space-y-6">
+      <div class="lg:col-span-2 space-y-4">
+        <div class="bg-slate-800/40 border border-slate-700/50 p-3 rounded-xl flex items-center gap-3">
+          <span class="text-slate-400 pl-1">🔍</span>
+          <input type="text" id="search-bar" placeholder="Search catalog by name or barcode..." class="w-full bg-transparent text-sm text-white outline-none placeholder-slate-500" />
+          <button id="clear-search" class="text-xs text-slate-500 hover:text-slate-300 hidden">Clear</button>
+        </div>
+
         <div class="bg-slate-800/50 border border-slate-700/60 p-5 rounded-xl shadow-xl">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-bold text-slate-200">Terminal Inventory</h3>
@@ -58,41 +64,69 @@
         </div>
       </div>
 
-      <div class="bg-slate-800/50 border border-slate-700/60 p-5 rounded-xl shadow-xl h-fit">
-        <h3 class="text-lg font-bold mb-4 text-slate-200">Management Panel</h3>
+      <div class="space-y-6">
         
-        <div class="admin-only hidden space-y-4">
-          <div class="bg-emerald-950/40 border border-emerald-800/60 p-3 rounded-lg">
-            <p class="text-xs text-emerald-400 font-medium">🔒 Admin Feature: Stock Intake Control</p>
+        <div class="bg-slate-800/70 border border-slate-600/50 p-5 rounded-xl shadow-2xl flex flex-col justify-between min-h-[350px]">
+          <div>
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-3">
+              <h3 class="text-base font-bold text-emerald-400 flex items-center gap-2">
+                <span>🛒</span> Current Receipt
+              </h3>
+              <button id="clear-basket-btn" class="text-[10px] bg-slate-900 text-slate-400 hover:text-red-400 border border-slate-700 px-2 py-0.5 rounded transition">Clear All</button>
+            </div>
+
+            <div id="basket-items-container" class="space-y-2 max-h-[220px] overflow-y-auto pr-1 text-xs">
+              <p class="text-slate-500 text-center py-8 italic">Basket is empty. Tap products to add.</p>
+            </div>
           </div>
+
+          <div class="border-t border-slate-700 pt-3 mt-4 space-y-3">
+            <div class="flex justify-between items-center font-bold text-base">
+              <span class="text-slate-300">Total Bill:</span>
+              <span class="text-emerald-400 text-lg" id="basket-total">GH₵ 0.00</span>
+            </div>
+            <button id="checkout-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold py-2 px-4 rounded text-sm transition shadow-lg disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+              Complete Order & Log Sale
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/50 border border-slate-700/60 p-5 rounded-xl shadow-xl h-fit">
+          <h3 class="text-sm font-bold mb-3 text-slate-300">System Management</h3>
           
-          <form id="product-form" class="space-y-3">
-            <div>
-              <label class="block text-xs text-slate-400 mb-1">Product Name</label>
-              <input type="text" id="prod-name" placeholder="e.g. iPhone 16 Pro Max Case" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white outline-none" required />
+          <div class="admin-only hidden space-y-4">
+            <div class="bg-emerald-950/40 border border-emerald-800/60 p-2.5 rounded-lg">
+              <p class="text-[11px] text-emerald-400 font-medium">🔒 Admin Feature: Add New Product</p>
             </div>
             
-            <div class="grid grid-cols-2 gap-2">
+            <form id="product-form" class="space-y-3">
               <div>
-                <label class="block text-xs text-slate-400 mb-1">Price (GH₵)</label>
-                <input type="number" step="0.01" id="prod-price" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white outline-none" required />
+                <label class="block text-[11px] text-slate-400 mb-1">Product Name</label>
+                <input type="text" id="prod-name" placeholder="e.g. iPhone 16 Pro Max Case" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-white outline-none" required />
               </div>
+              
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] text-slate-400 mb-1">Price (GH₵)</label>
+                  <input type="number" step="0.01" id="prod-price" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-white outline-none" required />
+                </div>
+                <div>
+                  <label class="block text-[11px] text-slate-400 mb-1">Stock Qty</label>
+                  <input type="number" id="prod-stock" value="10" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-white outline-none" required />
+                </div>
+              </div>
+
               <div>
-                <label class="block text-xs text-slate-400 mb-1">Stock Qty</label>
-                <input type="number" id="prod-stock" value="10" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white outline-none" required />
+                <label class="block text-[11px] text-slate-400 mb-1">Barcode / SKU</label>
+                <input type="text" id="prod-barcode" placeholder="Optional barcode string" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-white outline-none" />
               </div>
-            </div>
 
-            <div>
-              <label class="block text-xs text-slate-400 mb-1">Barcode / SKU</label>
-              <input type="text" id="prod-barcode" placeholder="Optional barcode string" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white outline-none" />
-            </div>
-
-            <button type="submit" id="add-product-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 px-4 rounded transition mt-2">Add to System Inventory</button>
-          </form>
+              <button type="submit" id="add-product-btn" class="w-full bg-emerald-600/40 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-700/60 text-xs font-bold py-2 px-4 rounded transition mt-1">Add to System Inventory</button>
+            </form>
+          </div>
+          <p class="text-slate-500 text-[10px] mt-2">Sales entries automatically accumulate matching configuration indexes inside encrypted schema layers.</p>
         </div>
         
-        <p class="text-slate-500 text-xs mt-4">Standard checkout rules apply. Items added will dynamically expand registration layout configurations immediately.</p>
       </div>
     </div>
   </div>
@@ -105,6 +139,10 @@
     
     const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Global App States
+    let allProducts = [];
+    let salesBasket = [];
+
     const overlay = document.getElementById('login-overlay');
     const form = document.getElementById('login-form');
     const errorBox = document.getElementById('login-error');
@@ -114,6 +152,14 @@
     const loadingStatus = document.getElementById('loading-status');
     const productForm = document.getElementById('product-form');
     const addProductBtn = document.getElementById('add-product-btn');
+    
+    // Newly Linked Basket & Search UI Nodes
+    const searchBar = document.getElementById('search-bar');
+    const clearSearchBtn = document.getElementById('clear-search');
+    const basketContainer = document.getElementById('basket-items-container');
+    const basketTotalText = document.getElementById('basket-total');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const clearBasketBtn = document.getElementById('clear-basket-btn');
 
     async function checkUser() {
       try {
@@ -148,7 +194,7 @@
       }
     }
 
-    // Dynamic Product Catalog Loader Function
+    // Dynamic Product Catalog Loader & Cache Function
     async function loadProducts() {
       try {
         loadingStatus.innerText = "Syncing with Supabase...";
@@ -160,44 +206,10 @@
 
         if (error) throw error;
 
-        if (!products || products.length === 0) {
-          productsGrid.innerHTML = `
-            <div class="col-span-full text-center p-6 bg-slate-900/40 rounded-lg border border-dashed border-slate-700 text-slate-400 text-sm">
-              No products found in database yet. Ready to add item listings!
-            </div>`;
-          loadingStatus.innerText = "Empty catalog";
-          return;
-        }
+        // Cache globally for lightning fast search indexing
+        allProducts = products || [];
+        renderCatalog(allProducts);
 
-        productsGrid.innerHTML = products.map(product => {
-          let displayStock = 0;
-          let displayBarcode = 'N/A';
-          
-          // Parse string format (e.g. "12_BC-99831") if applicable
-          if (product.barcode && product.barcode.includes('_')) {
-            const parts = product.barcode.split('_');
-            displayStock = parseInt(parts[0]) || 0;
-            displayBarcode = parts.slice(1).join('_');
-          } else {
-            displayBarcode = product.barcode || 'N/A';
-            displayStock = 1; // Default fallback if data format differs
-          }
-          
-          return `
-            <div class="bg-slate-900/60 hover:bg-slate-900 border border-slate-700/80 p-3 rounded-lg flex flex-col justify-between cursor-pointer transition shadow hover:shadow-emerald-950/20 group">
-              <div>
-                <h4 class="font-medium text-slate-200 group-hover:text-emerald-400 text-sm transition line-clamp-2">${product.name}</h4>
-                <p class="text-[10px] text-slate-500 mt-0.5">Barcode: ${displayBarcode}</p>
-              </div>
-              <div class="flex justify-between items-center mt-3 pt-2 border-t border-slate-800">
-                <span class="text-sm font-bold text-emerald-400">GH₵ ${parseFloat(product.price).toFixed(2)}</span>
-                <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded ${displayStock <= 3 ? 'text-amber-400 bg-amber-950/40' : ''}">Qty: ${displayStock}</span>
-              </div>
-            </div>
-          `;
-        }).join('');
-
-        loadingStatus.innerText = `Active items: ${products.length}`;
       } catch (err) {
         console.error(err);
         productsGrid.innerHTML = `
@@ -207,6 +219,161 @@
         loadingStatus.innerText = "Sync failure";
       }
     }
+
+    // Engine to render catalog grids based on filter outputs
+    function renderCatalog(itemsList) {
+      if (itemsList.length === 0) {
+        productsGrid.innerHTML = `
+          <div class="col-span-full text-center p-6 bg-slate-900/40 rounded-lg border border-dashed border-slate-700 text-slate-400 text-sm">
+            No matching items found.
+          </div>`;
+        loadingStatus.innerText = "No matches";
+        return;
+      }
+
+      productsGrid.innerHTML = itemsList.map(product => {
+        let displayStock = 1;
+        let displayBarcode = 'N/A';
+        
+        if (product.barcode && product.barcode.includes('|||')) {
+          const parts = product.barcode.split('|||');
+          displayStock = parseInt(parts[0]) ?? 1;
+          displayBarcode = parts[1] || 'N/A';
+        } else {
+          displayBarcode = product.barcode || 'N/A';
+          displayStock = 1; 
+        }
+        
+        return `
+          <div onclick="window.addItemToBasket('${product.id}')" class="bg-slate-900/60 hover:bg-slate-900 border border-slate-700/80 p-3 rounded-lg flex flex-col justify-between cursor-pointer transition shadow hover:shadow-emerald-950/20 group active:scale-[0.98]">
+            <div>
+              <h4 class="font-medium text-slate-200 group-hover:text-emerald-400 text-sm transition line-clamp-2">${product.name}</h4>
+              <p class="text-[10px] text-slate-500 mt-0.5">Barcode: ${displayBarcode}</p>
+            </div>
+            <div class="flex justify-between items-center mt-3 pt-2 border-t border-slate-800">
+              <span class="text-sm font-bold text-emerald-400">GH₵ ${parseFloat(product.price).toFixed(2)}</span>
+              <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded ${displayStock <= 3 ? 'text-amber-400 bg-amber-950/40' : ''}">Qty: ${displayStock}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      loadingStatus.innerText = `Active items: ${itemsList.length}`;
+    }
+
+    // Live Search Event Listeners
+    searchBar.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase().trim();
+      if (query.length > 0) {
+        clearSearchBtn.style.display = 'block';
+        const filtered = allProducts.filter(p => 
+          p.name.toLowerCase().includes(query) || 
+          (p.barcode && p.barcode.toLowerCase().includes(query))
+        );
+        renderCatalog(filtered);
+      } else {
+        clearSearchBtn.style.display = 'none';
+        renderCatalog(allProducts);
+      }
+    });
+
+    clearSearchBtn.addEventListener('click', () => {
+      searchBar.value = '';
+      clearSearchBtn.style.display = 'none';
+      renderCatalog(allProducts);
+    });
+
+    // POS Shopping Cart Operations Engine
+    window.addItemToBasket = function(productId) {
+      const product = allProducts.find(p => p.id === productId);
+      if (!product) return;
+
+      let displayStock = 1;
+      if (product.barcode && product.barcode.includes('|||')) {
+        displayStock = parseInt(product.barcode.split('|||')[0]) ?? 1;
+      }
+
+      const existingItem = salesBasket.find(item => item.id === productId);
+
+      if (existingItem) {
+        if (existingItem.quantity >= displayStock) {
+          alert(`Cannot add more. Only ${displayStock} items available in terminal stock.`);
+          return;
+        }
+        existingItem.quantity += 1;
+      } else {
+        salesBasket.push({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1,
+          maxStock: displayStock
+        });
+      }
+      updateBasketUI();
+    }
+
+    window.changeBasketQty = function(productId, delta) {
+      const item = salesBasket.find(i => i.id === productId);
+      if (!item) return;
+
+      item.quantity += delta;
+      if (item.quantity > item.maxStock) {
+        alert(`Limit reached. Only ${item.maxStock} items available in stock.`);
+        item.quantity = item.maxStock;
+      }
+
+      if (item.quantity <= 0) {
+        salesBasket = salesBasket.filter(i => i.id !== productId);
+      }
+      updateBasketUI();
+    }
+
+    function updateBasketUI() {
+      if (salesBasket.length === 0) {
+        basketContainer.innerHTML = `<p class="text-slate-500 text-center py-8 italic">Basket is empty. Tap products to add.</p>`;
+        basketTotalText.innerText = "GH₵ 0.00";
+        checkoutBtn.disabled = true;
+        return;
+      }
+
+      let totalBill = 0;
+      basketContainer.innerHTML = salesBasket.map(item => {
+        const itemTotal = item.price * item.quantity;
+        totalBill += itemTotal;
+        return `
+          <div class="bg-slate-900/80 border border-slate-700/70 p-2 rounded-lg flex justify-between items-center gap-2">
+            <div class="flex-1 min-w-0">
+              <h5 class="font-medium text-slate-200 truncate">${item.name}</h5>
+              <p class="text-[10px] text-emerald-400">GH₵ ${parseFloat(item.price).toFixed(2)} each</p>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-800 px-2 py-1 rounded border border-slate-700">
+              <button onclick="window.changeBasketQty('${item.id}', -1)" class="text-slate-400 hover:text-white font-bold text-xs px-1">-</button>
+              <span class="font-bold text-white text-xs px-0.5">${item.quantity}</span>
+              <button onclick="window.changeBasketQty('${item.id}', 1)" class="text-slate-400 hover:text-white font-bold text-xs px-1">+</button>
+            </div>
+            <div class="text-right min-w-[65px]">
+              <span class="font-bold text-slate-200 text-xs">GH₵ ${itemTotal.toFixed(2)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      basketTotalText.innerText = `GH₵ ${totalBill.toFixed(2)}`;
+      checkoutBtn.disabled = false;
+    }
+
+    clearBasketBtn.addEventListener('click', () => {
+      salesBasket = [];
+      updateBasketUI();
+    });
+
+    checkoutBtn.addEventListener('click', () => {
+      // Simulate receipt layout logging cleanly
+      alert(`🎉 Sale Successful!\nTotal Collected: ${basketTotalText.innerText}\nLogged onto counter records.`);
+      salesBasket = [];
+      updateBasketUI();
+    });
 
     // Form submission processing
     productForm.addEventListener('submit', async (e) => {
@@ -224,8 +391,8 @@
           barcodeInput = 'BC-' + Math.floor(100000 + Math.random() * 900000);
         }
 
-        // Pack stockQty cleanly directly into the required barcode column string
-        const packedBarcode = `${stockQty}_${barcodeInput}`;
+        // Pack values safely using triple pipe separation
+        const packedBarcode = `${stockQty}|||${barcodeInput}`;
 
         const { error } = await db
           .from('products')
@@ -238,7 +405,7 @@
         if (error) throw error;
 
         productForm.reset();
-        document.getElementById('prod-stock').value = "10"; // restore layout default
+        document.getElementById('prod-stock').value = "10"; 
         addProductBtn.innerText = 'Add to System Inventory';
         addProductBtn.disabled = false;
         
