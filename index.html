@@ -85,7 +85,7 @@
               <span class="text-slate-300">Total Bill:</span>
               <span class="text-emerald-400 text-lg" id="basket-total">GH₵ 0.00</span>
             </div>
-            <button id="checkout-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold py-2 px-4 rounded text-sm transition shadow-lg disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+            <button id="checkout-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded text-sm transition shadow-lg disabled:opacity-40 disabled:cursor-not-allowed" disabled>
               Complete Order & Log Sale
             </button>
           </div>
@@ -135,11 +135,11 @@
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
     
     const SUPABASE_URL = 'https://ezdpxjjzemtxbmjyjmfi.supabase.co'; 
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6ZHB4amp6ZW10eGJtanlqbWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzY5NDYsImV4cCI6MjA5NzM1Mjk0Nn0.ADcwJuefJxBC2h4iQHsTZ_Nixmlql_cGgGTIucxxgDw'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6ZHB4amp6ZW10eGJtanlqbWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3IDE3NzY5NDYsImV4cCI6MjA5NzM1Mjk0Nn0.ADcwJuefJxBC2h4iQHsTZ_Nixmlql_cGgGTIucxxgDw'; 
     
     const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Global App States
+    // Global States
     let allProducts = [];
     let salesBasket = [];
 
@@ -153,7 +153,6 @@
     const productForm = document.getElementById('product-form');
     const addProductBtn = document.getElementById('add-product-btn');
     
-    // Newly Linked Basket & Search UI Nodes
     const searchBar = document.getElementById('search-bar');
     const clearSearchBtn = document.getElementById('clear-search');
     const basketContainer = document.getElementById('basket-items-container');
@@ -194,7 +193,7 @@
       }
     }
 
-    // Dynamic Product Catalog Loader & Cache Function
+    // Dynamic Product Catalog Loader
     async function loadProducts() {
       try {
         loadingStatus.innerText = "Syncing with Supabase...";
@@ -206,7 +205,6 @@
 
         if (error) throw error;
 
-        // Cache globally for lightning fast search indexing
         allProducts = products || [];
         renderCatalog(allProducts);
 
@@ -220,7 +218,6 @@
       }
     }
 
-    // Engine to render catalog grids based on filter outputs
     function renderCatalog(itemsList) {
       if (itemsList.length === 0) {
         productsGrid.innerHTML = `
@@ -283,7 +280,7 @@
       renderCatalog(allProducts);
     });
 
-    // POS Shopping Cart Operations Engine
+    // POS Shopping Cart Operations
     window.addItemToBasket = function(productId) {
       const product = allProducts.find(p => p.id === productId);
       if (!product) return;
@@ -297,17 +294,22 @@
 
       if (existingItem) {
         if (existingItem.quantity >= displayStock) {
-          alert(`Cannot add more. Only ${displayStock} items available in terminal stock.`);
+          alert(`Cannot add more. Only ${displayStock} items remaining in system stock.`);
           return;
         }
         existingItem.quantity += 1;
       } else {
+        if (displayStock <= 0) {
+          alert("This product is currently out of stock!");
+          return;
+        }
         salesBasket.push({
           id: product.id,
           name: product.name,
           price: product.price,
           quantity: 1,
-          maxStock: displayStock
+          maxStock: displayStock,
+          rawBarcodeValue: product.barcode
         });
       }
       updateBasketUI();
@@ -319,7 +321,7 @@
 
       item.quantity += delta;
       if (item.quantity > item.maxStock) {
-        alert(`Limit reached. Only ${item.maxStock} items available in stock.`);
+        alert(`Limit reached. Only ${item.maxStock} items available.`);
         item.quantity = item.maxStock;
       }
 
@@ -368,11 +370,48 @@
       updateBasketUI();
     });
 
-    checkoutBtn.addEventListener('click', () => {
-      // Simulate receipt layout logging cleanly
-      alert(`🎉 Sale Successful!\nTotal Collected: ${basketTotalText.innerText}\nLogged onto counter records.`);
-      salesBasket = [];
-      updateBasketUI();
+    // AUTOMATED LIVE STOCK CHECKOUT CONCURRENCY
+    checkoutBtn.addEventListener('click', async () => {
+      checkoutBtn.innerText = "Processing Deductions...";
+      checkoutBtn.disabled = true;
+
+      try {
+        // Run updates sequentially across all items inside your receipt array
+        for (const basketItem of salesBasket) {
+          const originalProduct = allProducts.find(p => p.id === basketItem.id);
+          if (!originalProduct) continue;
+
+          // Extract barcode string part cleanly
+          let cleanBarcodeStr = originalProduct.barcode;
+          if (cleanBarcodeStr.includes('|||')) {
+            cleanBarcodeStr = cleanBarcodeStr.split('|||')[1];
+          }
+
+          // Compute new structural volume parameters safely
+          const updatedStockValue = Math.max(0, basketItem.maxStock - basketItem.quantity);
+          const newlyPackedBarcode = `${updatedStockValue}|||${cleanBarcodeStr}`;
+
+          // Fire atomic update statement to update Supabase row data
+          const { error } = await db
+            .from('products')
+            .update({ barcode: newlyPackedBarcode })
+            .eq('id', basketItem.id);
+
+          if (error) throw error;
+        }
+
+        alert(`🎉 Sale Complete!\nTotal: ${basketTotalText.innerText}\nInventory volumes successfully updated in Supabase!`);
+        
+        salesBasket = [];
+        updateBasketUI();
+        await loadProducts(); // Re-trigger live layout sync automatically
+
+      } catch (err) {
+        alert("Checkout Sync Interrupted: " + err.message);
+      } finally {
+        checkoutBtn.innerText = "Complete Order & Log Sale";
+        checkoutBtn.disabled = false;
+      }
     });
 
     // Form submission processing
@@ -391,7 +430,6 @@
           barcodeInput = 'BC-' + Math.floor(100000 + Math.random() * 900000);
         }
 
-        // Pack values safely using triple pipe separation
         const packedBarcode = `${stockQty}|||${barcodeInput}`;
 
         const { error } = await db
