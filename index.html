@@ -60,10 +60,39 @@
 
       <div class="bg-slate-800/50 border border-slate-700/60 p-5 rounded-xl shadow-xl h-fit">
         <h3 class="text-lg font-bold mb-4 text-slate-200">Management Panel</h3>
-        <div class="admin-only hidden space-y-3 mb-4">
-          <p class="text-xs bg-emerald-950 text-emerald-400 p-3 rounded-lg border border-emerald-800">🔒 Confirmed: Administrative system backend unlocked.</p>
+        
+        <div class="admin-only hidden space-y-4">
+          <div class="bg-emerald-950/40 border border-emerald-800/60 p-3 rounded-lg">
+            <p class="text-xs text-emerald-400 font-medium">🔒 Admin Feature: Stock Intake Control</p>
+          </div>
+          
+          <form id="product-form" class="space-y-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Product Name</label>
+              <input type="text" id="prod-name" placeholder="e.g. iPhone 16 Pro Max Case" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white outline-none" required />
+            </div>
+            
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">Price (GH₵)</label>
+                <input type="number" step="0.01" id="prod-price" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white outline-none" required />
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">Stock Qty</label>
+                <input type="number" id="prod-stock" placeholder="10" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white outline-none" required />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Barcode / SKU</label>
+              <input type="text" id="prod-sku" placeholder="Optional barcode string" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white outline-none" />
+            </div>
+
+            <button type="submit" id="add-product-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 px-4 rounded transition mt-2">Add to System Inventory</button>
+          </form>
         </div>
-        <p class="text-slate-400 text-xs">Standard checkout configuration rules apply. Click products in the terminal view to initiate register logic modules.</p>
+        
+        <p class="text-slate-500 text-xs mt-4">Standard checkout rules apply. Items added will dynamically expand registration layout configurations immediately.</p>
       </div>
     </div>
   </div>
@@ -83,13 +112,15 @@
     const logoutBtn = document.getElementById('logout-btn');
     const productsGrid = document.getElementById('products-grid');
     const loadingStatus = document.getElementById('loading-status');
+    const productForm = document.getElementById('product-form');
+    const addProductBtn = document.getElementById('add-product-btn');
 
     async function checkUser() {
       try {
         const { data: { session } } = await db.auth.getSession();
         if (session) {
           overlay.style.display = 'none';
-          fetchUserRole(session.user.id);
+          await fetchUserRole(session.user.id);
           loadProducts();
         }
       } catch (err) {
@@ -122,7 +153,6 @@
       try {
         loadingStatus.innerText = "Syncing with Supabase...";
         
-        // Pulls directly from your existing database table
         const { data: products, error } = await db
           .from('products')
           .select('*')
@@ -139,14 +169,13 @@
           return;
         }
 
-        // Render card layouts for items found inside database
         productsGrid.innerHTML = products.map(product => `
           <div class="bg-slate-900/60 hover:bg-slate-900 border border-slate-700/80 p-3 rounded-lg flex flex-col justify-between cursor-pointer transition shadow hover:shadow-emerald-950/20 group">
             <div>
               <h4 class="font-medium text-slate-200 group-hover:text-emerald-400 text-sm transition line-clamp-2">${product.name}</h4>
               <p class="text-xs text-slate-500 mt-0.5">SKU: ${product.sku || 'N/A'}</p>
             </div>
-            <div class="flex justify-between items-center mt-3 pt-2 border-t border-slate-850">
+            <div class="flex justify-between items-center mt-3 pt-2 border-t border-slate-800">
               <span class="text-sm font-bold text-emerald-400">GH₵ ${parseFloat(product.price).toFixed(2)}</span>
               <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded ${product.stock <= 5 ? 'text-amber-400 bg-amber-950/30' : ''}">Qty: ${product.stock}</span>
             </div>
@@ -158,11 +187,43 @@
         console.error(err);
         productsGrid.innerHTML = `
           <div class="col-span-full text-center p-6 bg-red-950/20 rounded-lg border border-dashed border-red-900 text-red-300 text-xs">
-            ⚠️ Database Table Notice: Ensure a public 'products' table exists inside Supabase containing columns: name, price, stock, and sku.
+            ⚠️ Database Sync Notice: Ensure table permits public row insertion values.
           </div>`;
         loadingStatus.innerText = "Sync failure";
       }
     }
+
+    // Admin Stock Form Interceptor
+    productForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      addProductBtn.innerText = 'Saving Item...';
+      addProductBtn.disabled = true;
+
+      try {
+        const name = document.getElementById('prod-name').value.trim();
+        const price = parseFloat(document.getElementById('prod-price').value);
+        const stock = parseInt(document.getElementById('prod-stock').value);
+        const sku = document.getElementById('prod-sku').value.trim() || null;
+
+        const { error } = await db
+          .from('products')
+          .insert([{ name, price, stock, sku }]);
+
+        if (error) throw error;
+
+        // Reset the input values for next entry
+        productForm.reset();
+        addProductBtn.innerText = 'Add to System Inventory';
+        addProductBtn.disabled = false;
+        
+        // Instant list reload
+        loadProducts();
+      } catch (err) {
+        alert("Insert Failed: " + err.message);
+        addProductBtn.innerText = 'Add to System Inventory';
+        addProductBtn.disabled = false;
+      }
+    });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -186,7 +247,7 @@
           loginBtn.disabled = false;
         } else {
           overlay.style.display = 'none';
-          fetchUserRole(data.user.id);
+          await fetchUserRole(data.user.id);
           loadProducts();
         }
       } catch (err) {
