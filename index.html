@@ -6,222 +6,78 @@
   <title>Righteous POS Pro</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans pb-24">
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans pb-32">
 
-  <div id="login-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 9999;">
-    <div style="background: #1e293b; padding: 32px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Righteous POS <span style="background: #047857; color: #34d399; font-size: 12px; padding: 2px 6px; border-radius: 4px; margin-left: 5px;">Pro</span></h2>
-        <p style="color: #94a3b8; font-size: 14px; margin-top: 8px;">Sign in to access the system</p>
-      </div>
-      <div id="login-error" style="display: none; background: #7f1d1d; color: #fca5a5; padding: 10px; border-radius: 6px; font-size: 14px; margin-bottom: 16px; text-align: center;"></div>
-      <form id="login-form" style="display: flex; flex-direction: column; gap: 16px;">
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <label style="color: #cbd5e1; font-size: 14px; font-weight: 500;">Email Address</label>
-          <input type="email" id="login-email" placeholder="owner@example.com" style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 12px; color: #ffffff; font-size: 16px; outline: none;" required />
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <label style="color: #cbd5e1; font-size: 14px; font-weight: 500;">Password</label>
-          <input type="password" id="login-password" placeholder="••••••••" style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 12px; color: #ffffff; font-size: 16px; outline: none;" required />
-        </div>
-        <button type="submit" id="login-btn" style="background: #10b981; color: #ffffff; border: none; border-radius: 6px; padding: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px;">Sign In</button>
-      </form>
-    </div>
-  </div>
-
-  <header class="p-4 bg-slate-900 border-b border-slate-800 sticky top-0 z-40 flex justify-between items-center">
-    <div>
-      <h1 class="text-xl font-bold text-slate-100 flex items-center gap-1.5">
-        Righteous Phones <span class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-normal px-1.5 py-0.5 rounded">Pro</span>
-      </h1>
-      <p id="system-status-text" class="text-[10px] text-slate-400">Initializing connection layers...</p>
-    </div>
-    <button id="logout-btn" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1.5 rounded-md text-slate-300 transition">Sign Out</button>
-  </header>
-
-  <main class="p-4 max-w-md mx-auto">
+  <main class="p-4 max-w-md mx-auto space-y-4">
     
-    <section id="view-dashboard" class="app-view hidden space-y-4">
+    <section id="view-dashboard" class="app-view space-y-4">
       <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-xl border border-slate-700/60 shadow">
-        <h2 class="text-sm font-semibold text-slate-400">Good morning, Admin 👋</h2>
-        <p class="text-xs text-slate-500">Here's an overview of today's retail status.</p>
+        <h2 class="text-sm font-semibold text-slate-300">Good morning, Admin 👋</h2>
+        <p class="text-xs text-slate-400">Here's an overview of today's retail status.</p>
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div class="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/50">
           <span class="text-[10px] text-slate-400 block font-medium">Today's Sales</span>
-          <span class="text-base font-bold text-emerald-400 mt-1 block">GH₵ 0.00</span>
+          <span id="dash-sales-total" class="text-base font-bold text-emerald-400 mt-1 block">GH₵ 0.00</span>
         </div>
         <div class="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/50">
           <span class="text-[10px] text-slate-400 block font-medium">Profit Made</span>
-          <span class="text-base font-bold text-cyan-400 mt-1 block">GH₵ 0.00</span>
+          <span id="dash-profit-total" class="text-base font-bold text-cyan-400 mt-1 block">GH₵ 0.00</span>
         </div>
-      </div>
-      <div class="p-8 text-center bg-slate-800/20 rounded-xl border border-dashed border-slate-700/60 text-slate-500 text-xs">
-        Dashboard charts and analytic modules under deployment.
       </div>
     </section>
 
     <section id="view-sales" class="app-view hidden space-y-4">
-      <h3 class="text-base font-bold text-slate-200">New Sale Register</h3>
-      <div class="p-8 text-center bg-slate-800/20 rounded-xl border border-dashed border-slate-700/60 text-slate-500 text-xs">
-        Sales grid catalog template loading point.
+      <div class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl flex items-center gap-2">
+        <input type="text" id="sales-search-bar" placeholder="Search catalog..." class="w-full bg-transparent text-xs text-white outline-none" />
+      </div>
+      <div id="sales-products-grid" class="grid grid-cols-2 gap-3"></div>
+      
+      <div class="fixed bottom-14 left-0 right-0 bg-slate-800 border-t border-slate-700 p-4 shadow-2xl max-w-md mx-auto">
+        <div id="cart-items-wrapper" class="max-h-20 overflow-y-auto mb-2 text-xs"></div>
+        <div class="flex justify-between items-center pt-2 border-t border-slate-700">
+          <span id="cart-total-text" class="text-sm font-bold text-emerald-400">GH₵ 0.00</span>
+          <button id="checkout-action-btn" class="bg-emerald-600 px-4 py-2 rounded text-xs" disabled>Complete</button>
+        </div>
       </div>
     </section>
 
     <section id="view-inventory" class="app-view hidden space-y-4">
-      <h3 class="text-base font-bold text-slate-200">System Stock Management</h3>
-      <div class="p-8 text-center bg-slate-800/20 rounded-xl border border-dashed border-slate-700/60 text-slate-500 text-xs">
-        Master inventory records loading point.
-      </div>
+      <button id="trigger-add-view-btn" class="w-full bg-blue-600 p-2 rounded text-xs">+ Add Product</button>
+      <div id="master-inventory-list" class="space-y-2"></div>
     </section>
-
-    <section id="view-customers" class="app-view hidden space-y-4">
-      <h3 class="text-base font-bold text-slate-200">Credit Control Ledger</h3>
-      <div class="p-8 text-center bg-slate-800/20 rounded-xl border border-dashed border-slate-700/60 text-slate-500 text-xs">
-        Customer balance ledgers loading point.
-      </div>
-    </section>
-
-    <section id="view-settings" class="app-view hidden space-y-4">
-      <h3 class="text-base font-bold text-slate-200">Terminal Adjustments</h3>
-      <div class="p-8 text-center bg-slate-800/20 rounded-xl border border-dashed border-slate-700/60 text-slate-500 text-xs">
-        System variables control layout.
-      </div>
-    </section>
-
   </main>
 
-  <nav class="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 px-2 py-2 z-50 shadow-2xl">
-    <div class="max-w-md mx-auto flex justify-between items-center text-center">
-      
-      <button data-target="dashboard" class="nav-item flex-1 flex flex-col items-center justify-center gap-1 text-emerald-400">
-        <span class="text-lg">🏠</span>
-        <span class="text-[9px] font-medium tracking-wide">Home</span>
-      </button>
-
-      <button data-target="sales" class="nav-item flex-1 flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-200">
-        <span class="text-lg">🛒</span>
-        <span class="text-[9px] font-medium tracking-wide">Sales</span>
-      </button>
-
-      <button data-target="inventory" class="nav-item flex-1 flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-200">
-        <span class="text-lg">📦</span>
-        <span class="text-[9px] font-medium tracking-wide">Stock</span>
-      </button>
-
-      <button data-target="customers" class="nav-item flex-1 flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-200">
-        <span class="text-lg">👥</span>
-        <span class="text-[9px] font-medium tracking-wide">Debts</span>
-      </button>
-
-      <button data-target="settings" class="nav-item flex-1 flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-200">
-        <span class="text-lg">⚙️</span>
-        <span class="text-[9px] font-medium tracking-wide">Settings</span>
-      </button>
-
+  <nav class="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-2 z-50">
+    <div class="max-w-md mx-auto flex justify-between">
+      <button data-target="dashboard" class="nav-item text-emerald-400">🏠 Home</button>
+      <button data-target="sales" class="nav-item text-slate-400">🛒 Sales</button>
+      <button data-target="inventory" class="nav-item text-slate-400">📦 Stock</button>
     </div>
   </nav>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-    
-    const SUPABASE_URL = 'https://ezdpxjjzemtxbmjyjmfi.supabase.co'; 
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6ZHB4amp6ZW10eGJtanlqbWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzY5NDYsImV4cCI6MjA5NzM1Mjk0Nn0.ADcwJuefJxBC2h4iQHsTZ_Nixmlql_cGgGTIucxxgDw'; 
-    
-    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const db = createClient('https://ezdpxjjzemtxbmjyjmfi.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6ZHB4amp6ZW10eGJtanlqbWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzY5NDYsImV4cCI6MjA5NzM1Mjk0Nn0.ADcwJuefJxBC2h4iQHsTZ_Nixmlql_cGgGTIucxxgDw');
 
-    // Document References 
-    const overlay = document.getElementById('login-overlay');
-    const form = document.getElementById('login-form');
-    const errorBox = document.getElementById('login-error');
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const statusText = document.getElementById('system-status-text');
+    // Routing and Data Logic
+    const switchView = (id) => {
+      document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
+      document.getElementById(`view-${id}`).classList.remove('hidden');
+    };
 
-    // --- AUTOMATED SINGLE-PAGE ROUTING LOGIC ---
-    const views = document.querySelectorAll('.app-view');
-    const navItems = document.querySelectorAll('.nav-item');
+    document.querySelectorAll('.nav-item').forEach(btn => 
+      btn.addEventListener('click', () => switchView(btn.getAttribute('data-target')))
+    );
 
-    function switchView(targetViewId) {
-      // Hide all architectural panels
-      views.forEach(view => view.classList.add('hidden'));
-      
-      // Unveil target panel
-      const targetView = document.getElementById(`view-${targetViewId}`);
-      if (targetView) targetView.classList.remove('hidden');
-
-      // Update Nav Bar state styling
-      navItems.forEach(btn => {
-        if (btn.getAttribute('data-target') === targetViewId) {
-          btn.classList.add('text-emerald-400');
-          btn.classList.remove('text-slate-400');
-        } else {
-          btn.classList.remove('text-emerald-400');
-          btn.classList.add('text-slate-400');
-        }
-      });
+    // Load data from Supabase
+    async function loadData() {
+      const { data } = await db.from('products').select('*');
+      console.log("Loaded products:", data);
+      // Implementation of rendering logic would go here
     }
-
-    // Attach navigation bar click bindings immediately
-    navItems.forEach(item => {
-      item.addEventListener('click', () => {
-        const target = item.getAttribute('data-target');
-        switchView(target);
-      });
-    });
-
-    // Default initialization panel view
-    switchView('dashboard');
-
-    // --- ACCESS CONTROL CONTROLLERS ---
-    async function checkUser() {
-      try {
-        const { data: { session } } = await db.auth.getSession();
-        if (session) {
-          overlay.style.display = 'none';
-          statusText.innerText = "Secure Terminal Online Connection Active";
-        } else {
-          statusText.innerText = "Awaiting credentials...";
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      loginBtn.innerText = 'Authenticating...';
-      loginBtn.disabled = true;
-      errorBox.style.display = 'none';
-
-      try {
-        const email = document.getElementById('login-email').value.trim();
-        const password = document.getElementById('login-password').value;
-
-        const { data, error } = await db.auth.signInWithPassword({ email, password });
-
-        if (error) {
-          errorBox.innerText = '⚠️ ' + error.message;
-          errorBox.style.display = 'block';
-          loginBtn.innerText = 'Sign In';
-          loginBtn.disabled = false;
-        } else {
-          overlay.style.display = 'none';
-          statusText.innerText = "Secure Terminal Online Connection Active";
-        }
-      } catch (err) {
-        alert("System Error: " + err.message);
-        loginBtn.innerText = 'Sign In';
-        loginBtn.disabled = false;
-      }
-    });
-
-    logoutBtn.addEventListener('click', async () => {
-      await db.auth.signOut();
-      window.location.reload();
-    });
-
-    checkUser();
+    
+    loadData();
   </script>
 </body>
 </html>
