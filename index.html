@@ -174,7 +174,7 @@
 
     // Helper to safely parse variations of packed barcode strings
     function parsePackedBarcode(barcodeStr) {
-      let stock = 10; // High default safely set for normal items
+      let stock = 10; 
       let cleanBarcode = barcodeStr || 'N/A';
 
       if (barcodeStr) {
@@ -184,7 +184,6 @@
           if (isNaN(stock)) stock = 10;
           cleanBarcode = parts[1] || 'N/A';
         } else if (barcodeStr.includes('_') && !isNaN(parseInt(barcodeStr.split('_')[0], 10))) {
-          // Gracefully handles legacy strings like "1046_BC-762621"
           const parts = barcodeStr.split('_');
           stock = parseInt(parts[0], 10);
           cleanBarcode = parts.slice(1).join('_') || 'N/A';
@@ -192,6 +191,53 @@
       }
       return { stock, cleanBarcode };
     }
+
+    // EXPLICIT GLOBAL WINDOW ASSIGNMENTS TO CAPTURE TAP EVENTS
+    window.addItemToBasket = function(productId) {
+      const product = allProducts.find(p => p.id === productId);
+      if (!product) return;
+
+      const { stock } = parsePackedBarcode(product.barcode);
+      const existingItem = salesBasket.find(item => item.id === productId);
+
+      if (existingItem) {
+        if (existingItem.quantity >= stock) {
+          alert(`Cannot add more. Only ${stock} items remaining in system stock.`);
+          return;
+        }
+        existingItem.quantity += 1;
+      } else {
+        if (stock <= 0) {
+          alert("This product is currently out of stock!");
+          return;
+        }
+        salesBasket.push({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1,
+          maxStock: stock,
+          rawBarcodeValue: product.barcode
+        });
+      }
+      updateBasketUI();
+    };
+
+    window.changeBasketQty = function(productId, delta) {
+      const item = salesBasket.find(i => i.id === productId);
+      if (!item) return;
+
+      item.quantity += delta;
+      if (item.quantity > item.maxStock) {
+        alert(`Limit reached. Only ${item.maxStock} items available.`);
+        item.quantity = item.maxStock;
+      }
+
+      if (item.quantity <= 0) {
+        salesBasket = salesBasket.filter(i => i.id !== productId);
+      }
+      updateBasketUI();
+    };
 
     async function checkUser() {
       try {
@@ -300,52 +346,6 @@
       clearSearchBtn.style.display = 'none';
       renderCatalog(allProducts);
     });
-
-    window.addItemToBasket = function(productId) {
-      const product = allProducts.find(p => p.id === productId);
-      if (!product) return;
-
-      const { stock } = parsePackedBarcode(product.barcode);
-      const existingItem = salesBasket.find(item => item.id === productId);
-
-      if (existingItem) {
-        if (existingItem.quantity >= stock) {
-          alert(`Cannot add more. Only ${stock} items remaining in system stock.`);
-          return;
-        }
-        existingItem.quantity += 1;
-      } else {
-        if (stock <= 0) {
-          alert("This product is currently out of stock!");
-          return;
-        }
-        salesBasket.push({
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          quantity: 1,
-          maxStock: stock,
-          rawBarcodeValue: product.barcode
-        });
-      }
-      updateBasketUI();
-    }
-
-    window.changeBasketQty = function(productId, delta) {
-      const item = salesBasket.find(i => i.id === productId);
-      if (!item) return;
-
-      item.quantity += delta;
-      if (item.quantity > item.maxStock) {
-        alert(`Limit reached. Only ${item.maxStock} items available.`);
-        item.quantity = item.maxStock;
-      }
-
-      if (item.quantity <= 0) {
-        salesBasket = salesBasket.filter(i => i.id !== productId);
-      }
-      updateBasketUI();
-    }
 
     function updateBasketUI() {
       if (salesBasket.length === 0) {
