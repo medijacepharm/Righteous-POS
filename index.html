@@ -131,40 +131,13 @@
     </div>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-    
-    const SUPABASE_URL = 'https://ezdpxjjzemtxbmjyjmfi.supabase.co'; 
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6ZHB4amp6ZW10eGJtanlqbWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzY5NDYsImV4cCI6MjA5NzM1Mjk0Nn0.ADcwJuefJxBC2h4iQHsTZ_Nixmlql_cGgGTIucxxgDw'; 
-    
-    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // Global States
-    let allProducts = [];
-    let salesBasket = [];
-
-    const overlay = document.getElementById('login-overlay');
-    const form = document.getElementById('login-form');
-    const errorBox = document.getElementById('login-error');
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const productsGrid = document.getElementById('products-grid');
-    const loadingStatus = document.getElementById('loading-status');
-    const productForm = document.getElementById('product-form');
-    const addProductBtn = document.getElementById('add-product-btn');
-    
-    const searchBar = document.getElementById('search-bar');
-    const clearSearchBtn = document.getElementById('clear-search');
-    const basketContainer = document.getElementById('basket-items-container');
-    const basketTotalText = document.getElementById('basket-total');
-    const checkoutBtn = document.getElementById('checkout-btn');
-    const clearBasketBtn = document.getElementById('clear-basket-btn');
-
-    // Helper to safely parse variations of packed barcode strings
-    function parsePackedBarcode(barcodeStr) {
+  <script>
+    // Global variable pointers accessible anywhere by the DOM interface layout
+    window.allProducts = [];
+    window.salesBasket = [];
+    window.parsePackedBarcode = function(barcodeStr) {
       let stock = 10; 
       let cleanBarcode = barcodeStr || 'N/A';
-
       if (barcodeStr) {
         if (barcodeStr.includes('|||')) {
           const parts = barcodeStr.split('|||');
@@ -178,15 +151,14 @@
         }
       }
       return { stock, cleanBarcode };
-    }
+    };
 
-    // INTERNAL ISOLATED FUNCTION ENGINES
-    function addItemToBasket(productId) {
-      const product = allProducts.find(p => p.id === productId);
+    window.addItemToBasket = function(productId) {
+      const product = window.allProducts.find(p => p.id === productId);
       if (!product) return;
 
-      const { stock } = parsePackedBarcode(product.barcode);
-      const existingItem = salesBasket.find(item => item.id === productId);
+      const { stock } = window.parsePackedBarcode(product.barcode);
+      const existingItem = window.salesBasket.find(item => item.id === productId);
 
       if (existingItem) {
         if (existingItem.quantity >= stock) {
@@ -199,7 +171,7 @@
           alert("This product is currently out of stock!");
           return;
         }
-        salesBasket.push({
+        window.salesBasket.push({
           id: product.id,
           name: product.name,
           price: product.price,
@@ -208,11 +180,11 @@
           rawBarcodeValue: product.barcode
         });
       }
-      updateBasketUI();
-    }
+      window.updateBasketUI();
+    };
 
-    function changeBasketQty(productId, delta) {
-      const item = salesBasket.find(i => i.id === productId);
+    window.changeBasketQty = function(productId, delta) {
+      const item = window.salesBasket.find(i => i.id === productId);
       if (!item) return;
 
       item.quantity += delta;
@@ -222,33 +194,72 @@
       }
 
       if (item.quantity <= 0) {
-        salesBasket = salesBasket.filter(i => i.id !== productId);
+        window.salesBasket = window.salesBasket.filter(i => i.id !== productId);
       }
-      updateBasketUI();
-    }
+      window.updateBasketUI();
+    };
 
-    // MODERN SECURE EVENT CAPTURING LAYERS FOR CATALOG CLICKS
-    productsGrid.addEventListener('click', (e) => {
-      const targetCard = e.target.closest('[data-product-id]');
-      if (targetCard) {
-        const id = targetCard.getAttribute('data-product-id');
-        addItemToBasket(id);
-      }
-    });
+    window.updateBasketUI = function() {
+      const basketContainer = document.getElementById('basket-items-container');
+      const basketTotalText = document.getElementById('basket-total');
+      const checkoutBtn = document.getElementById('checkout-btn');
 
-    // MODERN SECURE EVENT CAPTURING LAYERS FOR BASKET ADJUSTMENTS
-    basketContainer.addEventListener('click', (e) => {
-      const decreaseBtn = e.target.closest('[data-basket-decrease]');
-      const increaseBtn = e.target.closest('[data-basket-increase]');
-      
-      if (decreaseBtn) {
-        const id = decreaseBtn.getAttribute('data-basket-decrease');
-        changeBasketQty(id, -1);
-      } else if (increaseBtn) {
-        const id = increaseBtn.getAttribute('data-basket-increase');
-        changeBasketQty(id, 1);
+      if (window.salesBasket.length === 0) {
+        basketContainer.innerHTML = `<p class="text-slate-500 text-center py-8 italic">Basket is empty. Tap products to add.</p>`;
+        basketTotalText.innerText = "GH₵ 0.00";
+        checkoutBtn.disabled = true;
+        return;
       }
-    });
+
+      let totalBill = 0;
+      basketContainer.innerHTML = window.salesBasket.map(item => {
+        const itemTotal = item.price * item.quantity;
+        totalBill += itemTotal;
+        return `
+          <div class="bg-slate-900/80 border border-slate-700/70 p-2 rounded-lg flex justify-between items-center gap-2">
+            <div class="flex-1 min-w-0">
+              <h5 class="font-medium text-slate-200 truncate">${item.name}</h5>
+              <p class="text-[10px] text-emerald-400">GH₵ ${parseFloat(item.price).toFixed(2)} each</p>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-800 px-2 py-1 rounded border border-slate-700">
+              <button onclick="window.changeBasketQty('${item.id}', -1)" class="text-slate-400 hover:text-white font-bold text-xs px-1">-</button>
+              <span class="font-bold text-white text-xs px-0.5">${item.quantity}</span>
+              <button onclick="window.changeBasketQty('${item.id}', 1)" class="text-slate-400 hover:text-white font-bold text-xs px-1">+</button>
+            </div>
+            <div class="text-right min-w-[65px]">
+              <span class="font-bold text-slate-200 text-xs">GH₵ ${itemTotal.toFixed(2)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      basketTotalText.innerText = `GH₵ ${totalBill.toFixed(2)}`;
+      checkoutBtn.disabled = false;
+    };
+  </script>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    
+    const SUPABASE_URL = 'https://ezdpxjjzemtxbmjyjmfi.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6ZHB4amp6ZW10eGJtanlqbWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzY5NDYsImV4cCI6MjA5NzM1Mjk0Nn0.ADcwJuefJxBC2h4iQHsTZ_Nixmlql_cGgGTIucxxgDw'; 
+    
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const overlay = document.getElementById('login-overlay');
+    const form = document.getElementById('login-form');
+    const errorBox = document.getElementById('login-error');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const productsGrid = document.getElementById('products-grid');
+    const loadingStatus = document.getElementById('loading-status');
+    const productForm = document.getElementById('product-form');
+    const addProductBtn = document.getElementById('add-product-btn');
+    
+    const searchBar = document.getElementById('search-bar');
+    const clearSearchBtn = document.getElementById('clear-search');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const clearBasketBtn = document.getElementById('clear-basket-btn');
 
     async function checkUser() {
       try {
@@ -294,8 +305,8 @@
 
         if (error) throw error;
 
-        allProducts = products || [];
-        renderCatalog(allProducts);
+        window.allProducts = products || [];
+        renderCatalog(window.allProducts);
 
       } catch (err) {
         console.error(err);
@@ -318,10 +329,10 @@
       }
 
       productsGrid.innerHTML = itemsList.map(product => {
-        const { stock, cleanBarcode } = parsePackedBarcode(product.barcode);
+        const { stock, cleanBarcode } = window.parsePackedBarcode(product.barcode);
         
         return `
-          <div data-product-id="${product.id}" class="bg-slate-900/60 hover:bg-slate-900 border border-slate-700/80 p-3 rounded-lg flex flex-col justify-between cursor-pointer transition shadow hover:shadow-emerald-950/20 group active:scale-[0.98]">
+          <div onclick="window.addItemToBasket('${product.id}')" class="bg-slate-900/60 hover:bg-slate-900 border border-slate-700/80 p-3 rounded-lg flex flex-col justify-between cursor-pointer transition shadow hover:shadow-emerald-950/20 group active:scale-[0.98]">
             <div>
               <h4 class="font-medium text-slate-200 group-hover:text-emerald-400 text-sm transition line-clamp-2">${product.name}</h4>
               <p class="text-[10px] text-slate-500 mt-0.5">Barcode: ${cleanBarcode}</p>
@@ -341,60 +352,26 @@
       const query = e.target.value.toLowerCase().trim();
       if (query.length > 0) {
         clearSearchBtn.style.display = 'block';
-        const filtered = allProducts.filter(p => 
+        const filtered = window.allProducts.filter(p => 
           p.name.toLowerCase().includes(query) || 
           (p.barcode && p.barcode.toLowerCase().includes(query))
         );
         renderCatalog(filtered);
       } else {
         clearSearchBtn.style.display = 'none';
-        renderCatalog(allProducts);
+        renderCatalog(window.allProducts);
       }
     });
 
     clearSearchBtn.addEventListener('click', () => {
       searchBar.value = '';
       clearSearchBtn.style.display = 'none';
-      renderCatalog(allProducts);
+      renderCatalog(window.allProducts);
     });
 
-    function updateBasketUI() {
-      if (salesBasket.length === 0) {
-        basketContainer.innerHTML = `<p class="text-slate-500 text-center py-8 italic">Basket is empty. Tap products to add.</p>`;
-        basketTotalText.innerText = "GH₵ 0.00";
-        checkoutBtn.disabled = true;
-        return;
-      }
-
-      let totalBill = 0;
-      basketContainer.innerHTML = salesBasket.map(item => {
-        const itemTotal = item.price * item.quantity;
-        totalBill += itemTotal;
-        return `
-          <div class="bg-slate-900/80 border border-slate-700/70 p-2 rounded-lg flex justify-between items-center gap-2">
-            <div class="flex-1 min-w-0">
-              <h5 class="font-medium text-slate-200 truncate">${item.name}</h5>
-              <p class="text-[10px] text-emerald-400">GH₵ ${parseFloat(item.price).toFixed(2)} each</p>
-            </div>
-            <div class="flex items-center gap-2 bg-slate-800 px-2 py-1 rounded border border-slate-700">
-              <button data-basket-decrease="${item.id}" class="text-slate-400 hover:text-white font-bold text-xs px-1">-</button>
-              <span class="font-bold text-white text-xs px-0.5">${item.quantity}</span>
-              <button data-basket-increase="${item.id}" class="text-slate-400 hover:text-white font-bold text-xs px-1">+</button>
-            </div>
-            <div class="text-right min-w-[65px]">
-              <span class="font-bold text-slate-200 text-xs">GH₵ ${itemTotal.toFixed(2)}</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      basketTotalText.innerText = `GH₵ ${totalBill.toFixed(2)}`;
-      checkoutBtn.disabled = false;
-    }
-
     clearBasketBtn.addEventListener('click', () => {
-      salesBasket = [];
-      updateBasketUI();
+      window.salesBasket = [];
+      window.updateBasketUI();
     });
 
     checkoutBtn.addEventListener('click', async () => {
@@ -402,11 +379,11 @@
       checkoutBtn.disabled = true;
 
       try {
-        for (const basketItem of salesBasket) {
-          const originalProduct = allProducts.find(p => p.id === basketItem.id);
+        for (const basketItem of window.salesBasket) {
+          const originalProduct = window.allProducts.find(p => p.id === basketItem.id);
           if (!originalProduct) continue;
 
-          const { stock, cleanBarcode } = parsePackedBarcode(originalProduct.barcode);
+          const { stock, cleanBarcode } = window.parsePackedBarcode(originalProduct.barcode);
           const updatedStockValue = Math.max(0, stock - basketItem.quantity);
           
           const newlyPackedBarcode = `${updatedStockValue}|||${cleanBarcode}`;
@@ -419,10 +396,10 @@
           if (error) throw error;
         }
 
-        alert(`🎉 Sale Complete!\nTotal: ${basketTotalText.innerText}\nInventory volumes successfully updated in Supabase!`);
+        alert(`🎉 Sale Complete!\nInventory volumes successfully updated in Supabase!`);
         
-        salesBasket = [];
-        updateBasketUI();
+        window.salesBasket = [];
+        window.updateBasketUI();
         await loadProducts(); 
 
       } catch (err) {
