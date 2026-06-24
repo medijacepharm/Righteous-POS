@@ -4,14 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Righteous Phones & Accessories - POS</title>
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase JS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body class="bg-[#040811] text-gray-100 font-sans min-h-screen pb-24 selection:bg-emerald-500/30">
 
-  <!-- Main Header Container -->
   <header class="p-4 bg-[#0b0f19]/80 backdrop-blur-md sticky top-0 z-40 border-b border-gray-900 flex justify-between items-center">
     <div>
       <h1 class="text-base font-black tracking-tight text-white">Righteous Phones & Accessories</h1>
@@ -26,16 +23,13 @@
     </div>
   </header>
 
-  <!-- Interactive POS Canvas Layout -->
   <main class="p-4 max-w-md mx-auto flex flex-col gap-5">
 
-    <!-- Catalog Search Bar -->
     <div class="relative">
       <span class="absolute inset-y-0 left-3 flex items-center text-gray-500 pointer-events-none text-xs">🔍</span>
       <input id="catalog-search" type="text" placeholder="Search catalog by name or barcode..." class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 placeholder-gray-600 shadow-inner">
     </div>
 
-    <!-- Category Selector Quick Filters -->
     <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
       <button data-category="All" class="category-btn bg-indigo-600 text-white text-xs font-bold px-4 py-1.5 rounded-lg shrink-0 transition-all">All</button>
       <button data-category="Phones" class="category-btn bg-[#0b0f19] text-gray-400 border border-gray-800 text-xs font-bold px-4 py-1.5 rounded-lg shrink-0 transition-all">Phones</button>
@@ -43,16 +37,13 @@
       <button data-category="Others" class="category-btn bg-[#0b0f19] text-gray-400 border border-gray-800 text-xs font-bold px-4 py-1.5 rounded-lg shrink-0 transition-all">Others</button>
     </div>
 
-    <!-- Live Inventory Catalog Display -->
     <section>
       <h3 class="text-[10px] font-black uppercase text-gray-500 tracking-wider mb-2.5">Terminal Inventory</h3>
       <div id="inventory-grid" class="grid grid-cols-2 gap-3">
-        <!-- JavaScript loads item nodes dynamically here -->
         <p class="text-xs text-gray-500 italic py-4 col-span-2 text-center">Syncing catalog parameters...</p>
       </div>
     </section>
 
-    <!-- Interactive Checkout Basket Frame -->
     <section class="bg-[#070b14] border border-gray-900 rounded-2xl p-3 shadow-xl">
       <div class="flex justify-between items-center mb-3">
         <div class="flex items-center gap-1.5">
@@ -62,12 +53,10 @@
         <button id="clear-all-btn" class="text-[10px] font-bold text-gray-500 active:text-red-400 transition-colors">Clear All</button>
       </div>
 
-      <!-- Real-time Cart Grid Container -->
       <div id="cart-wrapper" class="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
         <p class="text-[11px] text-gray-500 text-center py-4 italic">Basket is empty. Tap products to add.</p>
       </div>
 
-      <!-- Live Bill Summation Bar -->
       <div class="mt-4 pt-3 border-t border-gray-900 flex justify-between items-end">
         <div>
           <p class="text-[9px] font-bold uppercase text-gray-500 tracking-wide">Total Bill:</p>
@@ -81,7 +70,6 @@
 
   </main>
 
-  <!-- Mobile Screen Bottom Dock Utilities -->
   <nav class="fixed bottom-0 inset-x-0 bg-[#070b14]/90 backdrop-blur-md border-t border-gray-900 py-2.5 px-4 z-40 flex justify-between items-center max-w-md mx-auto">
     <button class="flex flex-col items-center gap-1 flex-1 text-gray-500 active:text-white">
       <span class="text-sm">🏠</span><span class="text-[9px] font-medium">Home</span>
@@ -100,12 +88,10 @@
     </button>
   </nav>
 
-  <!-- Core POS Terminal JavaScript Operations Block -->
   <script>
     // --- 1. CLOUD APPLICATION INITIALIZATION ---
-    // PASTE YOUR ACTUAL INITIALIZATION KEYS DIRECTLY INSIDE THE STRINGS BELOW:
-    const SUPABASE_URL = "YOUR_SUPABASE_URL";
-    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+    const SUPABASE_URL = "https://ezdpxjjzemtxbmjyjmfi.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_ddxoPTFqgbR2pNgQBzY_aA_OeldolSz";
     
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -202,7 +188,6 @@
               <h5 class="text-gray-200 font-bold truncate text-[11px]">${item.name}</h5>
               <p class="text-[10px] text-emerald-400 font-extrabold mt-0.5">GH₵ ${item.price.toFixed(2)}</p>
             </div>
-            <!-- Robust Mobile Click Targets (w-8 h-8 Touchboxes) -->
             <div class="flex items-center gap-1 bg-gray-950 border border-gray-900 rounded-lg p-0.5 select-none">
               <button data-cart-id="${item.id}" data-delta="-1" type="button" class="w-8 h-8 flex items-center justify-center font-black text-gray-400 active:text-white text-sm active:bg-gray-800 rounded-md transition-all">-</button>
               <span class="font-extrabold text-white text-[11px] min-w-[20px] text-center">${item.quantity}</span>
@@ -221,7 +206,6 @@
     }
 
     function modifyCartDelta(id, delta) {
-      // Robust string-to-string conversion to bypass data-type mismatches
       const product = allProducts.find(p => String(p.id) === String(id));
       if (!product) return;
 
@@ -344,7 +328,7 @@
           // INTERCEPT MODAL FALLBACK: Prevents browser crashes if popup is blocked
           const inlineModalOverlay = document.createElement('div');
           inlineModalOverlay.id = 'receipt-modal-overlay';
-          inlineModalOverlay.className = 'fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4 overflow-y-auto animate-fade-in';
+          inlineModalOverlay.className = 'fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4 overflow-y-auto';
           
           inlineModalOverlay.innerHTML = `
             <div class="bg-white text-black p-5 rounded-2xl shadow-2xl w-full max-w-xs font-mono text-[11px] border-4 border-dashed border-gray-300">
@@ -387,7 +371,7 @@
 
       } catch (txError) {
         alert(`Checkout failed: ${txError.message}`);
-      } finally {
+      } {
         checkoutActionBtn.disabled = false;
         checkoutActionBtn.innerText = "Complete Order & Log Sale";
       }
