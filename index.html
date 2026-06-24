@@ -123,6 +123,15 @@
         renderInventoryCatalog();
       } catch (err) {
         console.error("Catalog download failure:", err.message);
+        if (inventoryGrid) {
+          inventoryGrid.innerHTML = `
+            <div class="col-span-2 p-4 bg-red-950/30 border border-red-900 rounded-xl text-center">
+              <p class="text-xs text-red-400 font-bold">Database Connection Warning</p>
+              <p class="text-[10px] text-gray-400 mt-1">${err.message}</p>
+              <p class="text-[9px] text-indigo-400 mt-2 italic">Please make sure Step 1 SQL script has been run.</p>
+            </div>
+          `;
+        }
       }
     }
 
@@ -151,8 +160,8 @@
               <span class="text-[9px] bg-indigo-950 text-indigo-400 border border-indigo-900/40 px-1.5 py-0.5 rounded font-bold">${product.category || 'Others'}</span>
               <h4 class="text-gray-100 font-bold text-xs mt-2 truncate">${product.name}</h4>
               <div class="flex items-center justify-between mt-1">
-                <p class="text-[11px] font-black text-emerald-400">GH₵ ${parseFloat(product.price).toFixed(2)}</p>
-                <span class="text-[9px] text-gray-500 font-extrabold bg-gray-950/80 px-1 rounded border border-gray-900">Qty: ${product.stock}</span>
+                <p class="text-[11px] font-black text-emerald-400">GH₵ ${parseFloat(product.price || 0).toFixed(2)}</p>
+                <span class="text-[9px] text-gray-500 font-extrabold bg-gray-950/80 px-1 rounded border border-gray-900">Qty: ${product.stock || 0}</span>
               </div>
             </div>
             <button data-action-id="${product.id}" type="button" class="mt-3 w-full bg-indigo-950/40 text-indigo-400 border border-indigo-900/50 hover:border-indigo-600 font-bold py-1.5 rounded-lg text-[10px] flex items-center justify-center gap-1 active:bg-indigo-600 active:text-white transition-all">
@@ -216,14 +225,14 @@
         if (nextQuantity <= 0) {
           salesCart.splice(activeIndex, 1);
         } else {
-          if (nextQuantity > product.stock) {
+          if (nextQuantity > (product.stock || 0)) {
             alert(`Stock allocation limit reached. Only ${product.stock} units available.`);
             return;
           }
           salesCart[activeIndex].quantity = nextQuantity;
         }
       } else if (delta > 0) {
-        if (product.stock <= 0) {
+        if ((product.stock || 0) <= 0) {
           alert("Product inventory is completely exhausted.");
           return;
         }
@@ -259,7 +268,7 @@
           const match = allProducts.find(p => String(p.id) === String(item.id));
           if (!match) throw new Error(`Product match sequence broken for item: ${item.name}`);
           
-          const adjustedStock = match.stock - item.quantity;
+          const adjustedStock = (match.stock || 0) - item.quantity;
           const { error: stockErr } = await supabase
             .from('products')
             .update({ stock: adjustedStock })
@@ -268,7 +277,7 @@
           if (stockErr) throw stockErr;
         }
 
-        // 2. Transmit Single Consolidated Sale Entry to PostGres
+        // 2. Transmit Single Consolidated Sale Entry to Postgres
         const { error: invoiceErr } = await supabase
           .from('sales')
           .insert([{
@@ -293,7 +302,7 @@
               </style>
             </head>
             <body>
-              <div class="center bold text-transform: uppercase;">Righteous Phones</div>
+              <div class="center bold">RIGHTEOUS PHONES</div>
               <div class="center">Accra, Ghana</div>
               <div class="divider"></div>
               ${salesCart.map(i => `
@@ -313,19 +322,28 @@
           </html>
         `;
 
-        // 4. Safe Mobile Popup Window Opener Handler
-        const printWindow = window.open('', '_blank', 'width=300,height=500');
+        // 4. Safe iOS/Safari Failproof Popup Window Opener Handler
+        let popupSuccessful = false;
+        try {
+          const printWindow = window.open('', '_blank', 'width=300,height=500');
+          if (printWindow && !printWindow.closed) {
+            printWindow.document.write(cleanReceiptMarkup);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+              try {
+                printWindow.print();
+                printWindow.close();
+              } catch (e) { console.error(e); }
+            }, 280);
+            popupSuccessful = true;
+          }
+        } catch (popupErr) {
+          popupSuccessful = false;
+        }
 
-        if (printWindow) {
-          printWindow.document.write(cleanReceiptMarkup);
-          printWindow.document.close();
-          printWindow.focus();
-          setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
-          }, 280);
-        } else {
-          // INTERCEPT MODAL FALLBACK: Prevents browser crashes if popup is blocked
+        // 5. If safari blocks the window, drop our customized on-screen dialog sheet instead
+        if (!popupSuccessful) {
           const inlineModalOverlay = document.createElement('div');
           inlineModalOverlay.id = 'receipt-modal-overlay';
           inlineModalOverlay.className = 'fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4 overflow-y-auto';
@@ -364,14 +382,14 @@
           document.body.appendChild(inlineModalOverlay);
         }
 
-        // 5. Reset Workspace Memory for the next Customer
+        // 6. Reset Workspace Memory for the next Customer
         salesCart = [];
         syncCartInterface();
         await fetchProducts();
 
       } catch (txError) {
         alert(`Checkout failed: ${txError.message}`);
-      } {
+      } finally {
         checkoutActionBtn.disabled = false;
         checkoutActionBtn.innerText = "Complete Order & Log Sale";
       }
@@ -393,7 +411,7 @@
         const preciseButton = e.target.closest('[data-cart-id]');
         if (preciseButton) {
           e.preventDefault();
-          e.stopPropagation(); // Shield mobile webview from executing phantom clicks
+          e.stopPropagation();
           const itemID = preciseButton.getAttribute('data-cart-id');
           const deltaIncrement = parseInt(preciseButton.getAttribute('data-delta'), 10);
           modifyCartDelta(itemID, deltaIncrement);
