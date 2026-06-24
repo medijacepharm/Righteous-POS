@@ -2,734 +2,182 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Righteous POS Pro</title>
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <style>
-    /* Premium Theme Styles for Action Buttons */
-    .btn-delete {
-      background-color: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      color: #f87171;
-      padding: 4px 10px;
-      border-radius: 8px;
-      font-size: 10px;
-      font-weight: 700;
-      transition: all 0.2s ease;
-    }
-    .btn-delete:hover {
-      background-color: rgba(239, 68, 68, 0.25);
-      color: #ef4444;
-      border-color: rgba(239, 68, 68, 0.4);
-    }
-    .btn-select-cart {
-      background-color: rgba(37, 99, 235, 0.1);
-      border: 1px solid rgba(37, 99, 235, 0.2);
-      color: #60a5fa;
-      padding: 4px 10px;
-      border-radius: 8px;
-      font-size: 10px;
-      font-weight: 700;
-      transition: all 0.2s ease;
-    }
-    .btn-select-cart:hover {
-      background-color: rgba(37, 99, 235, 0.25);
-      color: #3b82f6;
-      border-color: rgba(37, 99, 235, 0.4);
-    }
-    /* Hide scrollbar wrapper for custom horizontal layout items */
-    .scrollbar-none::-webkit-scrollbar {
-      display: none;
-    }
-    .scrollbar-none {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    /* Mobile Tap Highlight Fix */
-    .no-select {
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Righteous Phones & Accessories - POS</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
-<body class="bg-[#0b0f19] text-slate-100 min-h-screen font-sans pb-32">
+<body class="bg-[#040811] text-gray-100 font-sans min-h-screen pb-24 selection:bg-emerald-500/30">
 
-  <div id="login-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0b0f19; display: flex; align-items: center; justify-content: center; z-index: 9999;">
-    <div style="background: #111827; padding: 32px; border-radius: 16px; width: 92%; max-width: 400px; border: 1px solid #1f2937; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);">
-      <div style="text-align: center; margin-bottom: 28px;">
-        <h2 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.025em;">Righteous POS <span style="background: #065f46; color: #34d399; font-size: 11px; padding: 3px 8px; border-radius: 6px; margin-left: 4px; font-weight: 600; vertical-align: middle;">Pro</span></h2>
-        <p style="color: #9ca3af; font-size: 13px; margin-top: 8px;">Smart POS & Inventory System</p>
-      </div>
-      <div id="login-error" style="display: none; background: #7f1d1d; color: #fca5a5; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; text-align: center; border: 1px solid #991b1b;"></div>
-      <form id="login-form" style="display: flex; flex-direction: column; gap: 18px;">
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <label style="color: #d1d5db; font-size: 13px; font-weight: 500;">Username or Email</label>
-          <input type="email" id="login-email" placeholder="owner@example.com" style="background: #0b0f19; border: 1px solid #374151; border-radius: 8px; padding: 12px; color: #ffffff; font-size: 15px; outline: none; transition: border 0.2s;" required />
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <label style="color: #d1d5db; font-size: 13px; font-weight: 500;">Password</label>
-          <input type="password" id="login-password" placeholder="••••••••" style="background: #0b0f19; border: 1px solid #374151; border-radius: 8px; padding: 12px; color: #ffffff; font-size: 15px; outline: none; transition: border 0.2s;" required />
-        </div>
-        <button type="submit" id="login-btn" style="background: #2563eb; color: #ffffff; border: none; border-radius: 8px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 6px; transition: background 0.2s;">Login</button>
-        <div style="text-align: right; margin-top: 4px;">
-          <button type="button" id="forgot-password-trigger" style="background: none; border: none; color: #60a5fa; font-size: 12px; cursor: pointer; font-weight: 500; text-decoration: underline;">Forgot Password?</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <header class="p-4 bg-[#0b0f19]/80 backdrop-blur-md border-b border-gray-800/60 sticky top-0 z-40 flex justify-between items-center">
+  <!-- Main Header Container -->
+  <header class="p-4 bg-[#0b0f19]/80 backdrop-blur-md sticky top-0 z-40 border-b border-gray-900 flex justify-between items-center">
     <div>
-      <h1 class="text-lg font-black tracking-tight text-white flex items-center gap-2">
-        Righteous Phones & Accessories
-      </h1>
-      <p id="system-status-text" class="text-[10px] text-emerald-400 font-medium tracking-wide flex items-center gap-1">
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Secure Terminal Connection Active
-      </p>
+      <h1 class="text-base font-black tracking-tight text-white">Righteous Phones & Accessories</h1>
+      <div class="flex items-center gap-1.5 mt-0.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-[10px] text-gray-400 font-medium">Secure Terminal Connection Active</span>
+      </div>
     </div>
     <div class="flex items-center gap-2">
-      <span id="role-badge" class="hidden bg-indigo-950/60 text-indigo-400 border border-indigo-800 text-[10px] px-2 py-0.5 rounded-md font-semibold">Admin Mode</span>
-      <button id="logout-btn" class="text-[11px] bg-gray-900 hover:bg-gray-800 border border-gray-800 px-2.5 py-1.5 rounded-lg text-gray-300 transition font-medium">Sign Out</button>
+      <button class="bg-indigo-950/40 text-indigo-400 border border-indigo-900/60 font-bold px-2.5 py-1.5 rounded-lg text-[10px] active:bg-indigo-900/50">Admin Mode</button>
+      <button class="bg-gray-900 text-gray-400 font-bold px-2.5 py-1.5 rounded-lg text-[10px] border border-gray-800 active:bg-gray-800">Sign Out</button>
     </div>
   </header>
 
-  <main class="p-4 max-w-md mx-auto space-y-4">
-    
-    <section id="view-dashboard" class="app-view space-y-4">
-      <div class="bg-gradient-to-br from-gray-900 to-[#111827] p-4 rounded-2xl border border-gray-800 shadow-xl">
-        <h2 class="text-sm font-bold text-gray-200">Good morning, Admin 👋</h2>
-        <p class="text-xs text-gray-400 mt-0.5">Here's what's happening today.</p>
-      </div>
-      
-      <div class="grid grid-cols-2 gap-3">
-        <div class="bg-gray-900 p-4 rounded-2xl border border-gray-800/80 shadow-md">
-          <span class="text-[11px] text-gray-400 font-medium block">Today's Sales</span>
-          <span id="dash-sales-total" class="text-lg font-black text-white mt-1 block">GH₵ 0.00</span>
-          <span class="text-[9px] text-emerald-400 font-medium block mt-1">↑ 0% vs yesterday</span>
-        </div>
-        <div class="bg-gray-900 p-4 rounded-2xl border border-gray-800/80 shadow-md">
-          <span class="text-[11px] text-gray-400 font-medium block">Profit Made</span>
-          <span id="dash-profit-total" class="text-lg font-black text-emerald-400 mt-1 block">GH₵ 0.00</span>
-          <span class="text-[9px] text-emerald-400 font-medium block mt-1">↑ 0% vs yesterday</span>
-        </div>
-      </div>
+  <!-- Interactive POS Canvas Layout -->
+  <main class="p-4 max-w-md mx-auto flex flex-col gap-5">
 
-      <div class="grid grid-cols-2 gap-3">
-        <div class="bg-gray-900 p-3.5 rounded-2xl border border-gray-800/60">
-          <span class="text-[10px] text-gray-400 block font-medium">Low Stock Items</span>
-          <span id="dash-low-stock" class="text-sm font-extrabold text-amber-400 mt-0.5 block">0</span>
-        </div>
-        <div class="bg-gray-900 p-3.5 rounded-2xl border border-gray-800/60">
-          <span class="text-[10px] text-gray-400 block font-medium">Pending Debts</span>
-          <span id="dash-debts-total" class="text-sm font-extrabold text-red-400 mt-0.5 block">GH₵ 0.00</span>
-        </div>
-      </div>
+    <!-- Catalog Search Bar -->
+    <div class="relative">
+      <span class="absolute inset-y-0 left-3 flex items-center text-gray-500 pointer-events-none text-xs">🔍</span>
+      <input id="catalog-search" type="text" placeholder="Search catalog by name or barcode..." class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 placeholder-gray-600 shadow-inner">
+    </div>
 
-      <div class="bg-gray-900/60 border border-gray-800/80 rounded-2xl p-4 space-y-3">
-        <h4 class="text-[11px] font-bold text-gray-400 tracking-wider uppercase">System Ledger Overview</h4>
-        <div class="flex justify-between items-center text-xs border-b border-gray-800/50 pb-2.5">
-          <span class="text-gray-400">Total Registered Products:</span>
-          <span id="dash-product-count" class="font-bold text-white">0</span>
-        </div>
-        <div class="flex justify-between items-center text-xs">
-          <span class="text-gray-400">Active Debtors Listed:</span>
-          <span id="dash-debtor-count" class="font-bold text-white">0</span>
-        </div>
+    <!-- Category Selector Quick Filters -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+      <button data-category="All" class="category-btn bg-indigo-600 text-white text-xs font-bold px-4 py-1.5 rounded-lg shrink-0 transition-all">All</button>
+      <button data-category="Phones" class="category-btn bg-[#0b0f19] text-gray-400 border border-gray-800 text-xs font-bold px-4 py-1.5 rounded-lg shrink-0 transition-all">Phones</button>
+      <button data-category="Accessories" class="category-btn bg-[#0b0f19] text-gray-400 border border-gray-800 text-xs font-bold px-4 py-1.5 rounded-lg shrink-0 transition-all">Accessories</button>
+      <button data-category="Others" class="category-btn bg-[#0b0f19] text-gray-400 border border-gray-800 text-xs font-bold px-4 py-1.5 rounded-lg shrink-0 transition-all">Others</button>
+    </div>
+
+    <!-- Live Inventory Catalog Display -->
+    <section>
+      <h3 class="text-[10px] font-black uppercase text-gray-500 tracking-wider mb-2.5">Terminal Inventory</h3>
+      <div id="inventory-grid" class="grid grid-cols-2 gap-3">
+        <!-- JavaScript loads item nodes dynamically here -->
+        <p class="text-xs text-gray-500 italic py-4 col-span-2 text-center">Syncing catalog parameters...</p>
       </div>
     </section>
 
-    <section id="view-sales" class="app-view hidden space-y-4">
-      <div class="bg-gray-900 border border-gray-800 p-3 rounded-2xl flex items-center gap-2 shadow-inner">
-        <span class="text-sm text-gray-500 pl-1">🔍</span>
-        <input type="text" id="sales-search-bar" placeholder="Search catalog by name or barcode..." class="w-full bg-transparent text-xs text-white outline-none placeholder-gray-500" />
-      </div>
-
-      <div class="flex gap-2 overflow-x-auto pb-1 text-xs scrollbar-none">
-        <button data-cat="all" class="cat-filter-btn px-4 py-2 rounded-xl font-semibold bg-blue-600 text-white transition shadow-md shadow-blue-900/20">All</button>
-        <button data-cat="Phones" class="cat-filter-btn px-4 py-2 rounded-xl font-semibold bg-gray-900 text-gray-400 border border-gray-800/60 hover:bg-gray-800 transition">Phones</button>
-        <button data-cat="Accessories" class="cat-filter-btn px-4 py-2 rounded-xl font-semibold bg-gray-900 text-gray-400 border border-gray-800/60 hover:bg-gray-800 transition">Accessories</button>
-        <button data-cat="Others" class="cat-filter-btn px-4 py-2 rounded-xl font-semibold bg-gray-900 text-gray-400 border border-gray-800/60 hover:bg-gray-800 transition">Others</button>
-      </div>
-
-      <div>
-        <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase mb-2">Terminal Inventory</h3>
-        <div id="sales-products-grid" class="grid grid-cols-2 gap-3"></div>
-      </div>
-
-      <div class="fixed bottom-14 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 p-4 z-40 max-w-md mx-auto shadow-2xl rounded-t-2xl">
-        <div class="flex justify-between items-center mb-3">
-          <span class="text-xs font-bold text-gray-200 flex items-center gap-2">
-            🛒 Current Receipt (<span id="cart-item-count" class="text-blue-400">0</span>)
-          </span>
-          <button id="clear-cart-btn" class="text-[11px] text-gray-400 hover:text-red-400 transition font-medium">Clear All</button>
+    <!-- Interactive Checkout Basket Frame -->
+    <section class="bg-[#070b14] border border-gray-900 rounded-2xl p-3 shadow-xl">
+      <div class="flex justify-between items-center mb-3">
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs">🛒</span>
+          <h4 class="text-xs font-bold text-gray-200">Current Receipt ( <span id="cart-item-count" class="text-indigo-400 font-black">0</span> )</h4>
         </div>
-
-        <div id="cart-items-wrapper" class="max-h-28 overflow-y-auto space-y-2 mb-3 text-xs pr-1">
-          <p class="text-[11px] text-gray-500 text-center py-4 italic">Basket is empty. Tap products to add.</p>
-        </div>
-
-        <div class="flex gap-4 items-center pt-3 border-t border-gray-800">
-          <div class="flex-1">
-            <span class="text-[10px] text-gray-400 block font-medium">Total Bill:</span>
-            <span id="cart-total-text" class="text-base font-black text-emerald-400">GH₵ 0.00</span>
-          </div>
-          <button id="checkout-action-btn" class="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-800 disabled:text-gray-500 text-white font-bold py-3 px-4 rounded-xl text-xs transition duration-200 shadow-lg shadow-emerald-900/20" disabled>
-            Complete Order & Log Sale
-          </button>
-        </div>
+        <button id="clear-all-btn" class="text-[10px] font-bold text-gray-500 active:text-red-400 transition-colors">Clear All</button>
       </div>
-    </section>
 
-    <section id="view-inventory" class="app-view hidden space-y-4">
-      <div class="flex justify-between items-center">
+      <!-- Real-time Cart Grid Container -->
+      <div id="cart-wrapper" class="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
+        <p class="text-[11px] text-gray-500 text-center py-4 italic">Basket is empty. Tap products to add.</p>
+      </div>
+
+      <!-- Live Bill Summation Bar -->
+      <div class="mt-4 pt-3 border-t border-gray-900 flex justify-between items-end">
         <div>
-          <h3 class="text-base font-black text-white">Stock Management</h3>
-          <p id="inventory-count-text" class="text-[10px] text-gray-400">0 Total Records Loaded</p>
+          <p class="text-[9px] font-bold uppercase text-gray-500 tracking-wide">Total Bill:</p>
+          <p id="cart-total" class="text-base font-black text-emerald-400 mt-0.5">GH₵ 0.00</p>
         </div>
-        <button id="trigger-add-view-btn" class="bg-blue-600/10 text-blue-400 border border-blue-500/20 text-xs font-bold px-3 py-1.5 rounded-xl hover:bg-blue-600/20 transition">
-          + Add Product
+        <button id="checkout-action-btn" disabled class="bg-gray-800 text-gray-500 font-bold text-xs px-5 py-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+          Complete Order & Log Sale
         </button>
       </div>
-
-      <div id="master-inventory-list" class="space-y-2"></div>
-    </section>
-
-    <section id="view-customers" class="app-view hidden space-y-4">
-      <div class="flex justify-between items-center">
-        <div>
-          <h3 class="text-base font-black text-white">Credit Control Ledger</h3>
-          <p id="debtor-count-text" class="text-[10px] text-gray-400">0 Active Debtors</p>
-        </div>
-        <button id="trigger-add-debtor-btn" class="bg-red-600/10 text-red-400 border border-red-500/20 text-xs font-bold px-3 py-1.5 rounded-xl hover:bg-red-600/20 transition">
-          + Record Debt
-        </button>
-      </div>
-
-      <div id="master-debts-list" class="space-y-2"></div>
-    </section>
-
-    <section id="view-settings" class="app-view hidden space-y-4">
-      <h3 class="text-base font-black text-white">Terminal Adjustments</h3>
-      
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-4 shadow-md">
-        <div class="flex items-center gap-3 border-b border-gray-800 pb-3">
-          <div class="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center text-sm">🏪</div>
-          <div>
-            <h4 class="text-xs font-bold text-white">Store Information</h4>
-            <p class="text-[10px] text-gray-400">Righteous Phones & Accessories</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3 border-b border-gray-800 pb-3">
-          <div class="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center text-sm">🌐</div>
-          <div>
-            <h4 class="text-xs font-bold text-white">Database Engine</h4>
-            <p class="text-[10px] text-emerald-400">Supabase Cloud Gateway Live</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center text-sm">🖨️</div>
-          <div>
-            <h4 class="text-xs font-bold text-white">Receipt Printer Settings</h4>
-            <p class="text-[10px] text-gray-500">Standard 58mm Thermal Route</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="view-add-product-overlay" class="app-view hidden space-y-4">
-      <div class="flex justify-between items-center border-b border-gray-800 pb-2">
-        <div>
-          <h3 class="text-base font-black text-white">Add New Product</h3>
-          <p class="text-[10px] text-gray-400">Insert item directly into core cloud inventory</p>
-        </div>
-        <button id="cancel-add-btn" class="text-xs bg-gray-900 border border-gray-800 px-2.5 py-1 rounded-lg text-gray-400 hover:text-white">✕ Close</button>
-      </div>
-
-      <form id="master-product-creation-form" class="space-y-4 text-xs">
-        <div>
-          <label class="block text-gray-400 font-medium mb-1.5">Product Name *</label>
-          <input type="text" id="form-prod-name" placeholder="e.g. iPhone 14 Pro Max 256GB" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white outline-none focus:border-blue-500" required />
-        </div>
-
-        <div>
-          <label class="block text-gray-400 font-medium mb-1.5">Category *</label>
-          <select id="form-prod-category" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white outline-none focus:border-blue-500">
-            <option value="Phones">Phones</option>
-            <option value="Accessories">Accessories</option>
-            <option value="Others">Others</option>
-          </select>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-gray-400 font-medium mb-1.5">Cost Price (GH₵) *</label>
-            <input type="number" step="0.01" id="form-prod-cost" placeholder="3,800.00" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white outline-none focus:border-blue-500" required />
-          </div>
-          <div>
-            <label class="block text-gray-400 font-medium mb-1.5">Selling Price (GH₵) *</label>
-            <input type="number" step="0.01" id="form-prod-sell" placeholder="4,250.00" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white outline-none focus:border-blue-500" required />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-gray-400 font-medium mb-1.5">Quantity *</label>
-            <input type="number" id="form-prod-qty" value="10" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white outline-none focus:border-blue-500" required />
-          </div>
-          <div>
-            <label class="block text-gray-400 font-medium mb-1.5">Barcode Label</label>
-            <input type="text" id="form-prod-barcode" placeholder="Auto-generates if blank" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white outline-none focus:border-blue-500" />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-gray-400 font-medium mb-1.5">IMEI / Serial Number</label>
-          <input type="text" id="form-prod-imei" placeholder="Optional IMEI identifiers" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white outline-none focus:border-blue-500" />
-        </div>
-
-        <div>
-          <label class="block text-gray-400 font-medium mb-1.5">Supplier Name</label>
-          <input type="text" id="form-prod-supplier" placeholder="e.g. Hong Kong Logistics Hub" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white outline-none focus:border-blue-500" />
-        </div>
-
-        <button type="submit" id="save-product-action-btn" class="w-full bg-blue-600 hover:bg-blue-500 font-bold py-3.5 rounded-xl text-sm text-white transition shadow-lg shadow-blue-900/30">
-          Save Product Record
-        </button>
-      </form>
-    </section>
-
-    <section id="view-add-debtor-overlay" class="app-view hidden space-y-4">
-      <div class="flex justify-between items-center border-b border-gray-800 pb-2">
-        <div>
-          <h3 class="text-base font-black text-white">Record New Debt</h3>
-          <p class="text-[10px] text-gray-400">Log customer balances into system control</p>
-        </div>
-        <button id="cancel-debt-btn" class="text-xs bg-gray-900 border border-gray-800 px-2.5 py-1 rounded-lg text-gray-400 hover:text-white">✕ Close</button>
-      </div>
-
-      <form id="master-debtor-creation-form" class="space-y-4 text-xs">
-        <div>
-          <label class="block text-gray-400 font-medium mb-1.5">Customer Full Name *</label>
-          <input type="text" id="form-debtor-name" placeholder="e.g. Kofi Mensah" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white outline-none focus:border-red-500" required />
-        </div>
-
-        <div>
-          <label class="block text-gray-400 font-medium mb-1.5">Phone Number</label>
-          <input type="text" id="form-debtor-phone" placeholder="e.g. 0541234567" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white outline-none focus:border-red-500" />
-        </div>
-
-        <div>
-          <label class="block text-gray-400 font-medium mb-1.5">Outstanding Balance Due (GH₵) *</label>
-          <input type="number" step="0.01" id="form-debtor-amount" placeholder="450.00" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white outline-none focus:border-red-500" required />
-        </div>
-
-        <button type="submit" id="save-debtor-action-btn" class="w-full bg-red-600 hover:bg-red-500 font-bold py-3.5 rounded-xl text-sm text-white transition shadow-lg shadow-red-900/30">
-          Save Ledger Entry
-        </button>
-      </form>
     </section>
 
   </main>
 
-  <nav class="fixed bottom-0 left-0 right-0 bg-[#0b0f19] border-t border-gray-800/80 px-2 py-2.5 z-50 shadow-2xl max-w-md mx-auto">
-    <div class="flex justify-between items-center text-center">
-      <button data-target="dashboard" class="nav-item flex-1 flex flex-col items-center justify-center gap-1 text-blue-500">
-        <span class="text-base">🏠</span>
-        <span class="text-[10px] font-semibold tracking-wide">Home</span>
-      </button>
-      <button data-target="sales" class="nav-item flex-1 flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-gray-300">
-        <span class="text-base">🛒</span>
-        <span class="text-[10px] font-semibold tracking-wide">Sales</span>
-      </button>
-      <button data-target="inventory" class="nav-item flex-1 flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-gray-300">
-        <span class="text-base">📦</span>
-        <span class="text-[10px] font-semibold tracking-wide">Stock</span>
-      </button>
-      <button data-target="customers" class="nav-item flex-1 flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-gray-300">
-        <span class="text-base">👥</span>
-        <span class="text-[10px] font-semibold tracking-wide">Debts</span>
-      </button>
-      <button data-target="settings" class="nav-item flex-1 flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-gray-300">
-        <span class="text-base">⚙️</span>
-        <span class="text-[10px] font-semibold tracking-wide">Settings</span>
-      </button>
-    </div>
+  <!-- Mobile Screen Bottom Dock Utilities -->
+  <nav class="fixed bottom-0 inset-x-0 bg-[#070b14]/90 backdrop-blur-md border-t border-gray-900 py-2.5 px-4 z-40 flex justify-between items-center max-w-md mx-auto">
+    <button class="flex flex-col items-center gap-1 flex-1 text-gray-500 active:text-white">
+      <span class="text-sm">🏠</span><span class="text-[9px] font-medium">Home</span>
+    </button>
+    <button class="flex flex-col items-center gap-1 flex-1 text-indigo-400 font-bold">
+      <span class="text-sm">🛒</span><span class="text-[9px]">Sales</span>
+    </button>
+    <button class="flex flex-col items-center gap-1 flex-1 text-gray-500 active:text-white">
+      <span class="text-sm">📦</span><span class="text-[9px] font-medium">Stock</span>
+    </button>
+    <button class="flex flex-col items-center gap-1 flex-1 text-gray-500 active:text-white">
+      <span class="text-sm">👥</span><span class="text-[9px] font-medium">Debts</span>
+    </button>
+    <button class="flex flex-col items-center gap-1 flex-1 text-gray-500 active:text-white">
+      <span class="text-sm">⚙️</span><span class="text-[9px] font-medium">Settings</span>
+    </button>
   </nav>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+  <!-- Core POS Terminal JavaScript Operations Block -->
+  <script>
+    // --- 1. CLOUD APPLICATION INITIALIZATION ---
+    // PASTE YOUR ACTUAL INITIALIZATION KEYS DIRECTLY INSIDE THE STRINGS BELOW:
+    const SUPABASE_URL = "YOUR_SUPABASE_URL";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
     
-    const SUPABASE_URL = 'https://ezdpxjjzemtxbmjyjmfi.supabase.co'; 
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6ZHB4amp6ZW10eGJtanlqbWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzY5NDYsImV4cCI6MjA5NzM1Mjk0Nn0.ADcwJuefJxBC2h4iQHsTZ_Nixmlql_cGgGTIucxxgDw'; 
-    
-    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Global Architectural State Variables
+    // --- 2. POS CORE MEMORY STATE CACHES ---
     let allProducts = [];
-    let allDebtors = [];
     let salesCart = [];
-    let currentCategoryFilter = 'all';
+    let targetedCategory = "All";
+    let searchFilterQuery = "";
 
-    // Elements mapping
-    const overlay = document.getElementById('login-overlay');
-    const form = document.getElementById('login-form');
-    const errorBox = document.getElementById('login-error');
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const statusText = document.getElementById('system-status-text');
-    const roleBadge = document.getElementById('role-badge');
-    const forgotPasswordTrigger = document.getElementById('forgot-password-trigger');
-    
-    const views = document.querySelectorAll('.app-view');
-    const navItems = document.querySelectorAll('.nav-item');
-    
-    const salesGrid = document.getElementById('sales-products-grid');
-    const salesSearchBar = document.getElementById('sales-search-bar');
-    const cartWrapper = document.getElementById('cart-items-wrapper');
+    // DOM UI Hooks Cache
+    const inventoryGrid = document.getElementById('inventory-grid');
+    const cartWrapper = document.getElementById('cart-wrapper');
     const cartItemCountText = document.getElementById('cart-item-count');
-    const cartTotalText = document.getElementById('cart-total-text');
+    const cartTotalText = document.getElementById('cart-total');
     const checkoutActionBtn = document.getElementById('checkout-action-btn');
-    const clearCartBtn = document.getElementById('clear-cart-btn');
+    const catalogSearchInput = document.getElementById('catalog-search');
+    const clearAllBtn = document.getElementById('clear-all-btn');
 
-    const masterInventoryList = document.getElementById('master-inventory-list');
-    const inventoryCountText = document.getElementById('inventory-count-text');
-    const triggerAddViewBtn = document.getElementById('trigger-add-view-btn');
-    const cancelAddBtn = document.getElementById('cancel-add-btn');
-    const productCreationForm = document.getElementById('master-product-creation-form');
-    const saveProductActionBtn = document.getElementById('save-product-action-btn');
-
-    const masterDebtsList = document.getElementById('master-debts-list');
-    const debtorCountText = document.getElementById('debtor-count-text');
-    const triggerAddDebtorBtn = document.getElementById('trigger-add-debtor-btn');
-    const cancelDebtBtn = document.getElementById('cancel-debt-btn');
-    const debtorCreationForm = document.getElementById('master-debtor-creation-form');
-    const saveDebtorActionBtn = document.getElementById('save-debtor-action-btn');
-
-    const dashProductCount = document.getElementById('dash-product-count');
-    const dashDebtorCount = document.getElementById('dash-debtor-count');
-    const dashSalesTotal = document.getElementById('dash-sales-total');
-    const dashProfitTotal = document.getElementById('dash-profit-total');
-    const dashLowStock = document.getElementById('dash-low-stock');
-    const dashDebtsTotal = document.getElementById('dash-debts-total');
-
-    // --- VIEW DIRECTION ENGINE ---
-    function switchView(targetViewId) {
-      views.forEach(v => v.classList.add('hidden'));
-      const target = document.getElementById(`view-${targetViewId}`);
-      if (target) target.classList.remove('hidden');
-
-      navItems.forEach(btn => {
-        const matchingTarget = btn.getAttribute('data-target');
-        if (matchingTarget === targetViewId || 
-           (targetViewId === 'add-product-overlay' && matchingTarget === 'inventory') ||
-           (targetViewId === 'add-debtor-overlay' && matchingTarget === 'customers')) {
-          btn.classList.add('text-blue-500');
-          btn.classList.remove('text-gray-500', 'hover:text-gray-300');
-        } else {
-          btn.classList.remove('text-blue-500');
-          btn.classList.add('text-gray-500', 'hover:text-gray-300');
-        }
-      });
-    }
-
-    navItems.forEach(item => {
-      item.addEventListener('click', () => switchView(item.getAttribute('data-target')));
-    });
-
-    if(triggerAddViewBtn) triggerAddViewBtn.addEventListener('click', () => switchView('add-product-overlay'));
-    if(cancelAddBtn) cancelAddBtn.addEventListener('click', () => switchView('inventory'));
-    if(triggerAddDebtorBtn) triggerAddDebtorBtn.addEventListener('click', () => switchView('add-debtor-overlay'));
-    if(cancelDebtBtn) cancelDebtBtn.addEventListener('click', () => switchView('customers'));
-
-    // --- PASSWORD RESET ENGINE ---
-    if(forgotPasswordTrigger) {
-      forgotPasswordTrigger.addEventListener('click', async () => {
-        const email = document.getElementById('login-email').value.trim();
-        if(!email) {
-          alert("Please type your email address into the username/email input field first.");
-          return;
-        }
-        
-        if(confirm(`Send a secure password reset link to ${email}?`)) {
-          const { error } = await db.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin
-          });
-          if(error) {
-            alert("Reset Error: " + error.message);
-          } else {
-            alert("🔄 Secure password reset link dispatched! Please inspect your email inbox.");
-          }
-        }
-      });
-    }
-
-    // --- HARDWARE DELETION RUNTIME ---
-    window.deleteProduct = async (id) => {
-      if (!confirm("⚠️ Danger: Are you sure you want to delete this product completely from the cloud schema? This action cannot be undone.")) return;
-      
+    // --- 3. DATABASE CALL ENGINE ---
+    async function fetchProducts() {
       try {
-        const { error } = await db.from('products').delete().eq('id', id);
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('name', { ascending: true });
+        
         if (error) throw error;
-        alert("Product record securely wiped from cloud sync.");
-        await loadSystemData();
+        allProducts = data || [];
+        renderInventoryCatalog();
       } catch (err) {
-        alert("Deletion failed: " + err.message);
+        console.error("Catalog download failure:", err.message);
       }
-    };
+    }
 
-    // --- THERMAL SLIP RECEIPT PRINTER ENGINE ---
-    window.generateReceiptWindow = () => {
-      if (salesCart.length === 0) return;
-      
-      const printWindow = window.open('', '_blank', 'width=340,height=600');
-      const now = new Date().toLocaleString();
-      
-      let receiptText = `
-================================
-  RIGHTEOUS PHONES & ACCESSORIES
-   Your Trusted Tech Companion
-================================
-Date/Time: ${now}
-Terminal: Secure POS Pro Node #1
---------------------------------
-ITEMS SOLD:
-`;
+    // --- 4. CATALOG INTERFACE VIEW CONTROLLER ---
+    function renderInventoryCatalog() {
+      if(!inventoryGrid) return;
 
-      salesCart.forEach((item, index) => {
-        const lineTotal = item.price * item.quantity;
-        receiptText += `${index + 1}. ${item.name.substring(0, 22)}\n`;
-        receiptText += `   ${item.quantity} pcs x GH₵ ${item.price.toFixed(2)} = GH₵ ${lineTotal.toFixed(2)}\n`;
+      const workingSet = allProducts.filter(product => {
+        const matchesCategory = (targetedCategory === "All" || product.category === targetedCategory);
+        const nameText = (product.name || '').toLowerCase();
+        const barcodeText = (product.barcode || '').toLowerCase();
+        const searchLow = searchFilterQuery.toLowerCase();
+        const matchesSearch = (nameText.includes(searchLow) || barcodeText.includes(searchLow));
+        return matchesCategory && matchesSearch;
       });
 
-      receiptText += `--------------------------------
-TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
-================================
-    Thank You For Your Business!
-      Please Visit Us Again.
-================================
-`;
-
-      printWindow.document.write(`
-        <html>
-        <head>
-          <title>Thermal Printer Invoice Output</title>
-          <style>
-            body { font-family: 'Courier New', Courier, monospace; background: #ffffff; color: #000000; padding: 10px; margin: 0; font-size: 12px; }
-            pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
-          </style>
-        </head>
-        <body>
-          <pre>${receiptText}</pre>
-          <script>
-            setTimeout(() => { 
-              window.print(); 
-            }, 800);
-          <\/script>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-    };
-
-    // --- DYNAMIC STOCK META PACK PARSER ---
-    function parseProductStockMetadata(product) {
-      let qty = 10;
-      let displayBarcode = product.barcode || 'N/A';
-
-      if (product.barcode) {
-        if (product.barcode.includes('|||')) {
-          const blocks = product.barcode.split('|||');
-          qty = parseInt(blocks[0], 10);
-          displayBarcode = blocks[1] || 'N/A';
-        } else if (product.barcode.includes('_')) {
-          const blocks = product.barcode.split('_');
-          const testQty = parseInt(blocks[0], 10);
-          if (!isNaN(testQty)) {
-            qty = testQty;
-            displayBarcode = blocks.slice(1).join('_');
-          }
-        }
-      }
-      return { qty: isNaN(qty) ? 0 : qty, displayBarcode };
-    }
-
-    // --- PIPELINE METRIC REFRESH LOGIC ---
-    async function loadSystemData() {
-      try {
-        const { data: products, error } = await db.from('products').select('*').order('name', { ascending: true });
-        if (error) throw error;
-        allProducts = products || [];
-        
-        const { data: debtors } = await db.from('customers').select('*').order('name', { ascending: true });
-        allDebtors = debtors || [];
-
-        const { data: salesData } = await db.from('sales').select('total_bill, total_profit');
-        let totalBill = 0, totalProfit = 0, lowStockCount = 0;
-        
-        salesData?.forEach(s => {
-          totalBill += parseFloat(s.total_bill || 0);
-          totalProfit += parseFloat(s.total_profit || 0);
-        });
-
-        allProducts.forEach(p => {
-          const { qty } = parseProductStockMetadata(p);
-          if(qty <= 3) lowStockCount++;
-        });
-
-        let accumulatedDebts = 0;
-        allDebtors.forEach(d => accumulatedDebts += parseFloat(d.outstanding_debt || 0));
-        
-        if(dashProductCount) dashProductCount.innerText = allProducts.length;
-        if(dashDebtorCount) dashDebtorCount.innerText = allDebtors.length;
-        if(dashSalesTotal) dashSalesTotal.innerText = `GH₵ ${totalBill.toFixed(2)}`;
-        if(dashProfitTotal) dashProfitTotal.innerText = `GH₵ ${totalProfit.toFixed(2)}`;
-        if(dashLowStock) dashLowStock.innerText = lowStockCount;
-        if(dashDebtsTotal) dashDebtsTotal.innerText = `GH₵ ${accumulatedDebts.toFixed(2)}`;
-        if(inventoryCountText) inventoryCountText.innerText = `${allProducts.length} Total Records Loaded`;
-        if(debtorCountText) debtorCountText.innerText = `${allDebtors.length} Active Debtors`;
-
-        renderSalesCatalog();
-        renderMasterInventory();
-        renderDebtsLedger();
-
-      } catch (err) {
-        console.error("Cloud synchronization deferred: ", err.message);
-      }
-    }
-
-    // --- DESIGN UI INJECTION ENGINES ---
-    function renderSalesCatalog() {
-      if(!salesGrid) return;
-      const query = salesSearchBar ? salesSearchBar.value.toLowerCase().trim() : '';
-      
-      const filtered = allProducts.filter(p => {
-        const matchCat = (currentCategoryFilter === 'all') || (p.category === currentCategoryFilter);
-        const { displayBarcode } = parseProductStockMetadata(p);
-        return matchCat && (p.name.toLowerCase().includes(query) || displayBarcode.toLowerCase().includes(query));
-      });
-
-      if (filtered.length === 0) {
-        salesGrid.innerHTML = `<div class="col-span-full text-center py-6 text-gray-500 text-xs italic">No matching items cataloged.</div>`;
+      if (workingSet.length === 0) {
+        inventoryGrid.innerHTML = `<p class="text-xs text-gray-500 italic py-6 text-center col-span-2">No matching inventory found.</p>`;
         return;
       }
 
-      salesGrid.innerHTML = filtered.map(product => {
-        const { qty } = parseProductStockMetadata(product);
-        const isOutOfStock = qty <= 0;
+      inventoryGrid.innerHTML = workingSet.map(product => {
         return `
-          <div data-add-id="${product.id}" class="no-select bg-gray-900 border border-gray-800 p-3.5 rounded-2xl flex flex-col justify-between cursor-pointer active:scale-95 transition duration-150 ${isOutOfStock ? 'opacity-30 pointer-events-none' : 'hover:border-gray-700'}" style="touch-action: manipulation;">
+          <div class="bg-[#0b0f19] p-3 rounded-xl border border-gray-900 flex flex-col justify-between shadow-md relative overflow-hidden group">
             <div>
-              <span class="text-[9px] bg-gray-900 text-blue-400 border border-gray-800 px-2 py-0.5 rounded-md font-bold">${product.category || 'Accessories'}</span>
-              <h4 class="font-bold text-gray-200 text-xs mt-2 line-clamp-2">${product.name}</h4>
-            </div>
-            <div class="mt-4 pt-2 border-t border-gray-800/60 flex flex-col gap-2">
-              <div class="flex justify-between items-center">
-                <span class="text-xs font-extrabold text-white">GH₵ ${parseFloat(product.price).toFixed(2)}</span>
-                <span class="text-[9px] px-2 py-0.5 rounded-md font-semibold ${qty <= 3 ? 'bg-red-950/40 text-red-400' : 'bg-gray-800 text-gray-400'}">Qty: ${qty}</span>
+              <span class="text-[9px] bg-indigo-950 text-indigo-400 border border-indigo-900/40 px-1.5 py-0.5 rounded font-bold">${product.category || 'Others'}</span>
+              <h4 class="text-gray-100 font-bold text-xs mt-2 truncate">${product.name}</h4>
+              <div class="flex items-center justify-between mt-1">
+                <p class="text-[11px] font-black text-emerald-400">GH₵ ${parseFloat(product.price).toFixed(2)}</p>
+                <span class="text-[9px] text-gray-500 font-extrabold bg-gray-950/80 px-1 rounded border border-gray-900">Qty: ${product.stock}</span>
               </div>
-              <button class="btn-select-cart w-full mt-1">🛒 Select to Cart</button>
             </div>
+            <button data-action-id="${product.id}" type="button" class="mt-3 w-full bg-indigo-950/40 text-indigo-400 border border-indigo-900/50 hover:border-indigo-600 font-bold py-1.5 rounded-lg text-[10px] flex items-center justify-center gap-1 active:bg-indigo-600 active:text-white transition-all">
+              🛒 Select to Cart
+            </button>
           </div>
         `;
       }).join('');
     }
 
-    function renderMasterInventory() {
-      if(!masterInventoryList) return;
-      if (allProducts.length === 0) {
-        masterInventoryList.innerHTML = `<p class="text-center py-6 text-gray-500 text-xs italic">Stock is empty.</p>`;
-        return;
-      }
-
-      masterInventoryList.innerHTML = allProducts.map(product => {
-        const { qty, displayBarcode } = parseProductStockMetadata(product);
-        return `
-          <div class="bg-gray-900 border border-gray-800 p-3.5 rounded-2xl flex justify-between items-center text-xs">
-            <div class="min-w-0 flex-1 pr-2">
-              <h4 class="font-bold text-gray-200 truncate">${product.name}</h4>
-              <p class="text-[10px] text-gray-400 mt-0.5">BC: <span class="text-gray-300">${displayBarcode}</span> ${product.imei_sn ? `| IMEI: ${product.imei_sn}` : ''}</p>
-              <p class="text-[10px] text-gray-500 mt-0.5">Cost: GH₵ ${parseFloat(product.cost_price || 0).toFixed(2)} | Supplier: ${product.supplier || 'N/A'}</p>
-            </div>
-            <div class="text-right flex flex-col items-end gap-2 shrink-0">
-              <div>
-                <span class="block font-extrabold text-white">GH₵ ${parseFloat(product.price).toFixed(2)}</span>
-                <span class="text-[9px] font-bold bg-gray-800 text-gray-400 px-2 py-0.5 rounded-md mt-1 inline-block">Stock: ${qty}</span>
-              </div>
-              <button class="btn-delete mt-1" onclick="window.deleteProduct('${product.id}')">✕ Delete</button>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function renderDebtsLedger() {
-      if(!masterDebtsList) return;
-      if (allDebtors.length === 0) {
-        masterDebtsList.innerHTML = `<p class="text-center py-6 text-gray-500 text-xs italic">No current entries inside the ledger entries.</p>`;
-        return;
-      }
-
-      masterDebtsList.innerHTML = allDebtors.map(debtor => {
-        return `
-          <div class="bg-gray-900 border border-gray-800 p-3.5 rounded-2xl flex justify-between items-center text-xs">
-            <div>
-              <h4 class="font-bold text-gray-200">${debtor.name}</h4>
-              <p class="text-[10px] text-gray-400 mt-0.5">📞 ${debtor.phone || 'No phone recorded'}</p>
-            </div>
-            <div class="text-right">
-              <span class="block font-extrabold text-red-400">GH₵ ${parseFloat(debtor.outstanding_debt || 0).toFixed(2)}</span>
-              <span class="text-[9px] bg-red-950/40 text-red-400 border border-red-900/30 px-2 py-0.5 rounded-md mt-1 inline-block font-semibold">Outstanding Balance</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    // --- BASKET CORE MUTATIONS ---
-    function executeAddToCart(productId) {
-      const p = allProducts.find(item => String(item.id) === String(productId));
-      if (!p) return;
-
-      const { qty } = parseProductStockMetadata(p);
-      const cartItem = salesCart.find(c => String(c.id) === String(productId));
-
-      if (cartItem) {
-        if (cartItem.quantity >= qty) {
-          alert(`Terminal alert: Maximum item allotment reached (${qty}).`);
-          return;
-        }
-        cartItem.quantity += 1;
-      } else {
-        if (qty <= 0) return;
-        salesCart.push({
-          id: p.id,
-          name: p.name,
-          price: parseFloat(p.price),
-          cost: parseFloat(p.cost_price || 0),
-          quantity: 1,
-          maxStock: qty,
-          rawBarcode: p.barcode
-        });
-      }
-      syncCartInterface();
-    }
-
-    function modifyCartDelta(productId, delta) {
-      const idx = salesCart.findIndex(c => String(c.id) === String(productId));
-      if (idx === -1) return;
-
-      salesCart[idx].quantity += delta;
-      if (salesCart[idx].quantity > salesCart[idx].maxStock) {
-        salesCart[idx].quantity = salesCart[idx].maxStock;
-      }
-      if (salesCart[idx].quantity <= 0) {
-        salesCart.splice(idx, 1);
-      }
-      syncCartInterface();
-    }
-
+    // --- 5. COMPREHENSIVE BASKET CALCULATION ENGINES ---
     function syncCartInterface() {
       if(!cartWrapper) return;
       let itemsTotalCount = 0, totalBillAmount = 0;
@@ -738,7 +186,10 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
         cartWrapper.innerHTML = `<p class="text-[11px] text-gray-500 text-center py-4 italic">Basket is empty. Tap products to add.</p>`;
         if(cartItemCountText) cartItemCountText.innerText = "0";
         if(cartTotalText) cartTotalText.innerText = "GH₵ 0.00";
-        if(checkoutActionBtn) checkoutActionBtn.disabled = true;
+        if(checkoutActionBtn) {
+          checkoutActionBtn.disabled = true;
+          checkoutActionBtn.className = "bg-gray-800 text-gray-500 font-bold text-xs px-5 py-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed";
+        }
         return;
       }
 
@@ -746,15 +197,16 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
         itemsTotalCount += item.quantity;
         totalBillAmount += (item.price * item.quantity);
         return `
-          <div class="bg-[#0b0f19] p-2.5 rounded-xl border border-gray-800 flex justify-between items-center shadow-sm">
+          <div class="bg-[#0b0f19] p-2.5 rounded-xl border border-gray-900 flex justify-between items-center shadow-sm">
             <div class="min-w-0 flex-1 pr-2">
               <h5 class="text-gray-200 font-bold truncate text-[11px]">${item.name}</h5>
               <p class="text-[10px] text-emerald-400 font-extrabold mt-0.5">GH₵ ${item.price.toFixed(2)}</p>
             </div>
-            <div class="flex items-center gap-2.5 bg-gray-900 border border-gray-800 rounded-lg px-2 py-1">
-              <button data-cart-id="${item.id}" data-delta="-1" class="font-black text-gray-400 hover:text-white px-0.5">-</button>
-              <span class="font-extrabold text-white text-[11px] min-w-[10px] text-center">${item.quantity}</span>
-              <button data-cart-id="${item.id}" data-delta="1" class="font-black text-gray-400 hover:text-white px-0.5">+</button>
+            <!-- Robust Mobile Click Targets (w-8 h-8 Touchboxes) -->
+            <div class="flex items-center gap-1 bg-gray-950 border border-gray-900 rounded-lg p-0.5 select-none">
+              <button data-cart-id="${item.id}" data-delta="-1" type="button" class="w-8 h-8 flex items-center justify-center font-black text-gray-400 active:text-white text-sm active:bg-gray-800 rounded-md transition-all">-</button>
+              <span class="font-extrabold text-white text-[11px] min-w-[20px] text-center">${item.quantity}</span>
+              <button data-cart-id="${item.id}" data-delta="1" type="button" class="w-8 h-8 flex items-center justify-center font-black text-gray-400 active:text-white text-sm active:bg-gray-800 rounded-md transition-all">+</button>
             </div>
           </div>
         `;
@@ -762,209 +214,240 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
 
       if(cartItemCountText) cartItemCountText.innerText = itemsTotalCount;
       if(cartTotalText) cartTotalText.innerText = `GH₵ ${totalBillAmount.toFixed(2)}`;
-      if(checkoutActionBtn) checkoutActionBtn.disabled = false;
+      if(checkoutActionBtn) {
+        checkoutActionBtn.disabled = false;
+        checkoutActionBtn.className = "bg-emerald-600 text-white font-black text-xs px-5 py-2.5 rounded-xl hover:bg-emerald-500 shadow-lg shadow-emerald-950/20 active:scale-[0.98] transition-all";
+      }
     }
 
-    // --- CORE EVENT LISTENER ATTACHMENTS ---
-    if(salesGrid) {
-      salesGrid.addEventListener('click', (e) => {
-        const card = e.target.closest('[data-add-id]');
-        if (card) executeAddToCart(card.getAttribute('data-add-id'));
+    function modifyCartDelta(id, delta) {
+      // Robust string-to-string conversion to bypass data-type mismatches
+      const product = allProducts.find(p => String(p.id) === String(id));
+      if (!product) return;
+
+      const activeIndex = salesCart.findIndex(item => String(item.id) === String(id));
+
+      if (activeIndex > -1) {
+        const nextQuantity = salesCart[activeIndex].quantity + delta;
+        if (nextQuantity <= 0) {
+          salesCart.splice(activeIndex, 1);
+        } else {
+          if (nextQuantity > product.stock) {
+            alert(`Stock allocation limit reached. Only ${product.stock} units available.`);
+            return;
+          }
+          salesCart[activeIndex].quantity = nextQuantity;
+        }
+      } else if (delta > 0) {
+        if (product.stock <= 0) {
+          alert("Product inventory is completely exhausted.");
+          return;
+        }
+        salesCart.push({
+          id: product.id,
+          name: product.name,
+          price: parseFloat(product.price || 0),
+          cost: parseFloat(product.cost || 0),
+          quantity: 1
+        });
+      }
+      syncCartInterface();
+    }
+
+    // --- 6. ATOMIC TRANSACTION PROCESSING MACHINE ---
+    async function executeCheckoutTransaction() {
+      if (salesCart.length === 0) return;
+
+      checkoutActionBtn.disabled = true;
+      checkoutActionBtn.innerText = "Processing...";
+
+      let totalBillAmount = 0;
+      let totalProfitAmount = 0;
+
+      salesCart.forEach(item => {
+        totalBillAmount += (item.price * item.quantity);
+        totalProfitAmount += ((item.price - item.cost) * item.quantity);
+      });
+
+      try {
+        // 1. Bulk Update Catalog Inventory Decrements Row-by-Row
+        for (const item of salesCart) {
+          const match = allProducts.find(p => String(p.id) === String(item.id));
+          if (!match) throw new Error(`Product match sequence broken for item: ${item.name}`);
+          
+          const adjustedStock = match.stock - item.quantity;
+          const { error: stockErr } = await supabase
+            .from('products')
+            .update({ stock: adjustedStock })
+            .eq('id', item.id);
+
+          if (stockErr) throw stockErr;
+        }
+
+        // 2. Transmit Single Consolidated Sale Entry to PostGres
+        const { error: invoiceErr } = await supabase
+          .from('sales')
+          .insert([{
+            items: salesCart,
+            total_bill: totalBillAmount,
+            total_profit: totalProfitAmount
+          }]);
+
+        if (invoiceErr) throw invoiceErr;
+
+        // 3. Assemble Virtual 58mm POS Receipt Matrix Data
+        const cleanReceiptMarkup = `
+          <html>
+            <head>
+              <title>Print Receipt</title>
+              <style>
+                body { font-family: monospace; width: 58mm; margin: 0; padding: 4px; font-size: 11px; color: #000; }
+                .center { text-align: center; }
+                .bold { font-weight: bold; }
+                .divider { border-top: 1px dashed #000; margin: 6px 0; }
+                .row { display: flex; justify-content: space-between; }
+              </style>
+            </head>
+            <body>
+              <div class="center bold text-transform: uppercase;">Righteous Phones</div>
+              <div class="center">Accra, Ghana</div>
+              <div class="divider"></div>
+              ${salesCart.map(i => `
+                <div class="row">
+                  <span>${i.name} (x${i.quantity})</span>
+                  <span>GH₵ ${(i.price * i.quantity).toFixed(2)}</span>
+                </div>
+              `).join('')}
+              <div class="divider"></div>
+              <div class="row bold" style="font-size: 12px;">
+                <span>TOTAL AMOUNT:</span>
+                <span>GH₵ ${totalBillAmount.toFixed(2)}</span>
+              </div>
+              <div class="divider"></div>
+              <div class="center" style="margin-top: 8px;">Transaction Saved Successfully.<br>Thank you for your business!</div>
+            </body>
+          </html>
+        `;
+
+        // 4. Safe Mobile Popup Window Opener Handler
+        const printWindow = window.open('', '_blank', 'width=300,height=500');
+
+        if (printWindow) {
+          printWindow.document.write(cleanReceiptMarkup);
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+          }, 280);
+        } else {
+          // INTERCEPT MODAL FALLBACK: Prevents browser crashes if popup is blocked
+          const inlineModalOverlay = document.createElement('div');
+          inlineModalOverlay.id = 'receipt-modal-overlay';
+          inlineModalOverlay.className = 'fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4 overflow-y-auto animate-fade-in';
+          
+          inlineModalOverlay.innerHTML = `
+            <div class="bg-white text-black p-5 rounded-2xl shadow-2xl w-full max-w-xs font-mono text-[11px] border-4 border-dashed border-gray-300">
+              <div class="text-center border-b border-dashed border-gray-400 pb-3 mb-3">
+                <h3 class="font-black text-sm tracking-tight text-black">RIGHTEOUS PHONES</h3>
+                <p class="text-[9px] text-gray-500 font-sans tracking-wide mt-0.5">Mobile Receipt Preview</p>
+              </div>
+              
+              <div class="receipt-body text-left leading-tight my-4 flex flex-col gap-1.5">
+                ${salesCart.map(item => `
+                  <div class="flex justify-between">
+                    <span class="truncate pr-1">${item.name} x${item.quantity}</span>
+                    <span class="shrink-0 font-bold">GH₵ ${(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                `).join('')}
+                <div class="border-t border-dashed border-gray-400 my-2"></div>
+                <div class="flex justify-between text-xs font-black">
+                  <span>TOTAL BILL:</span>
+                  <span>GH₵ ${totalBillAmount.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div class="mt-5 pt-1 border-t border-dashed border-gray-400 flex flex-col gap-2">
+                <button onclick="window.print()" class="w-full bg-emerald-600 text-white py-2.5 rounded-xl font-sans font-black text-xs shadow-md active:bg-emerald-700">
+                  Print Receipt
+                </button>
+                <button onclick="document.getElementById('receipt-modal-overlay').remove();" class="w-full bg-gray-100 text-gray-700 py-2 rounded-xl font-sans font-bold text-xs active:bg-gray-200">
+                  Dismiss & Clear Cart
+                </button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(inlineModalOverlay);
+        }
+
+        // 5. Reset Workspace Memory for the next Customer
+        salesCart = [];
+        syncCartInterface();
+        await fetchProducts();
+
+      } catch (txError) {
+        alert(`Checkout failed: ${txError.message}`);
+      } finally {
+        checkoutActionBtn.disabled = false;
+        checkoutActionBtn.innerText = "Complete Order & Log Sale";
+      }
+    }
+
+    // --- 7. EVENT ACTION LISTENERS BINDING LOOP ---
+    if(inventoryGrid) {
+      inventoryGrid.addEventListener('click', (e) => {
+        const targetingBtn = e.target.closest('[data-action-id]');
+        if (targetingBtn) {
+          const productRefId = targetingBtn.getAttribute('data-action-id');
+          modifyCartDelta(productRefId, 1);
+        }
       });
     }
 
     if(cartWrapper) {
       cartWrapper.addEventListener('click', (e) => {
-        const targetBtn = e.target.closest('[data-cart-id]');
-        if (targetBtn) {
-          const id = targetBtn.getAttribute('data-cart-id');
-          const delta = parseInt(targetBtn.getAttribute('data-delta'), 10);
-          modifyCartDelta(id, delta);
+        const preciseButton = e.target.closest('[data-cart-id]');
+        if (preciseButton) {
+          e.preventDefault();
+          e.stopPropagation(); // Shield mobile webview from executing phantom clicks
+          const itemID = preciseButton.getAttribute('data-cart-id');
+          const deltaIncrement = parseInt(preciseButton.getAttribute('data-delta'), 10);
+          modifyCartDelta(itemID, deltaIncrement);
         }
       });
     }
 
-    if(clearCartBtn) clearCartBtn.addEventListener('click', () => { salesCart = []; syncCartInterface(); });
-    if(salesSearchBar) salesSearchBar.addEventListener('input', () => renderSalesCatalog());
-
-    document.querySelectorAll('.cat-filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.cat-filter-btn').forEach(b => {
-          b.classList.remove('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-900/20');
-          b.classList.add('bg-gray-900', 'text-gray-400', 'border', 'border-gray-800/60');
+    document.querySelectorAll('.category-btn').forEach(button => {
+      button.addEventListener('click', (e) => {
+        document.querySelectorAll('.category-btn').forEach(b => {
+          b.className = "category-btn bg-[#0b0f19] text-gray-400 border border-gray-800 text-xs font-bold px-4 py-1.5 rounded-lg shrink-0 transition-all";
         });
-        
-        btn.classList.remove('bg-gray-900', 'text-gray-400', 'border', 'border-gray-800/60');
-        btn.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-900/20');
-
-        currentCategoryFilter = btn.getAttribute('data-cat');
-        renderSalesCatalog();
+        e.currentTarget.className = "category-btn bg-indigo-600 text-white text-xs font-bold px-4 py-1.5 rounded-lg shrink-0 transition-all shadow-md shadow-indigo-950/40";
+        targetedCategory = e.currentTarget.getAttribute('data-category');
+        renderInventoryCatalog();
       });
     });
 
-    // --- FORM RECORDS STORAGE PIPELINES ---
-    if(productCreationForm) {
-      productCreationForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if(saveProductActionBtn) { saveProductActionBtn.innerText = "Saving item..."; saveProductActionBtn.disabled = true; }
-
-        try {
-          const name = document.getElementById('form-prod-name').value.trim();
-          const category = document.getElementById('form-prod-category').value;
-          const cost = parseFloat(document.getElementById('form-prod-cost').value) || 0;
-          const sell = parseFloat(document.getElementById('form-prod-sell').value) || 0;
-          const qty = parseInt(document.getElementById('form-prod-qty').value, 10) || 0;
-          const imei = document.getElementById('form-prod-imei').value.trim() || null;
-          const supplier = document.getElementById('form-prod-supplier').value.trim() || null;
-          
-          let barcodeLabel = document.getElementById('form-prod-barcode').value.trim();
-          if (!barcodeLabel) barcodeLabel = 'BC-' + Math.floor(100000 + Math.random() * 900000);
-
-          const packedBarcodeString = `${qty}|||${barcodeLabel}`;
-
-          const { error } = await db.from('products').insert([{
-            name: name, category: category, cost_price: cost, price: sell, barcode: packedBarcodeString, imei_sn: imei, supplier: supplier
-          }]);
-
-          if (error) throw error;
-          productCreationForm.reset();
-          switchView('inventory');
-          await loadSystemData();
-        } catch (err) {
-          alert("Error adding product: " + err.message);
-        } finally {
-          if(saveProductActionBtn) { saveProductActionBtn.innerText = "Save Product Record"; saveProductActionBtn.disabled = false; }
-        }
+    if(catalogSearchInput) {
+      catalogSearchInput.addEventListener('input', (e) => {
+        searchFilterQuery = e.target.value;
+        renderInventoryCatalog();
       });
     }
 
-    if(debtorCreationForm) {
-      debtorCreationForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if(saveDebtorActionBtn) { saveDebtorActionBtn.innerText = "Saving ledger entry..."; saveDebtorActionBtn.disabled = true; }
-
-        try {
-          const name = document.getElementById('form-debtor-name').value.trim();
-          const phone = document.getElementById('form-debtor-phone').value.trim() || null;
-          const debt = parseFloat(document.getElementById('form-debtor-amount').value) || 0;
-
-          const { error } = await db.from('customers').insert([{ name, phone, outstanding_debt: debt }]);
-          if (error) throw error;
-
-          debtorCreationForm.reset();
-          switchView('customers');
-          await loadSystemData();
-        } catch (err) {
-          alert("Error recording debt: " + err.message);
-        } finally {
-          if(saveDebtorActionBtn) { saveDebtorActionBtn.innerText = "Save Ledger Entry"; saveDebtorActionBtn.disabled = false; }
-        }
+    if(clearAllBtn) {
+      clearAllBtn.addEventListener('click', () => {
+        salesCart = [];
+        syncCartInterface();
       });
     }
 
     if(checkoutActionBtn) {
-      checkoutActionBtn.addEventListener('click', async () => {
-        checkoutActionBtn.innerText = "Processing...";
-        checkoutActionBtn.disabled = true;
-
-        try {
-          let orderTotalBill = 0, orderTotalProfit = 0;
-
-          for (const item of salesCart) {
-            const original = allProducts.find(p => String(p.id) === String(item.id));
-            if (!original) continue;
-
-            const { qty, displayBarcode } = parseProductStockMetadata(original);
-            const computedNewStock = Math.max(0, qty - item.quantity);
-            const rebuiltPackedString = `${computedNewStock}|||${displayBarcode}`;
-
-            orderTotalBill += (item.price * item.quantity);
-            orderTotalProfit += ((item.price - item.cost) * item.quantity);
-
-            const { error: updateErr } = await db.from('products').update({ barcode: rebuiltPackedString }).eq('id', item.id);
-            if (updateErr) throw updateErr;
-          }
-
-          const { error: saleLogErr } = await db.from('sales').insert([{
-            items: salesCart, total_bill: orderTotalBill, total_profit: orderTotalProfit
-          }]);
-          if (saleLogErr) throw saleLogErr;
-
-          alert(`🎉 Order Logged Successfully! Printing thermal slip invoice now...`);
-          
-          window.generateReceiptWindow();
-
-          salesCart = [];
-          syncCartInterface();
-          await loadSystemData();
-        } catch (err) {
-          alert("Checkout failed: " + err.message);
-        } finally {
-          checkoutActionBtn.innerText = "Complete Order & Log Sale";
-          checkoutActionBtn.disabled = false;
-        }
-      });
+      checkoutActionBtn.addEventListener('click', executeCheckoutTransaction);
     }
 
-    // --- AUTH LAYER INITIALIZATION LOOP ---
-    async function checkUser() {
-      try {
-        const { data: { session }, error } = await db.auth.getSession();
-        if (error) throw error;
-        if (session) {
-          if(overlay) overlay.style.display = 'none';
-          await fetchUserRole(session.user.id);
-          await loadSystemData();
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    async function fetchUserRole(userId) {
-      try {
-        const { data } = await db.from('profiles').select('role').eq('id', userId).single();
-        if (data?.role === 'admin' && roleBadge) roleBadge.classList.remove('hidden');
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    if(form) {
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if(loginBtn) { loginBtn.innerText = 'Authenticating...'; loginBtn.disabled = true; }
-        if(errorBox) errorBox.style.display = 'none';
-
-        try {
-          const email = document.getElementById('login-email').value.trim();
-          const password = document.getElementById('login-password').value;
-          const { data, error } = await db.auth.signInWithPassword({ email, password });
-
-          if (error) {
-            if(errorBox) { errorBox.innerText = '⚠️ ' + error.message; errorBox.style.display = 'block'; }
-            if(loginBtn) { loginBtn.innerText = 'Login'; loginBtn.disabled = false; }
-          } else {
-            if(overlay) overlay.style.display = 'none';
-            await fetchUserRole(data.user.id);
-            await loadSystemData();
-          }
-        } catch (err) {
-          alert("System Error: " + err.message);
-          if(loginBtn) { loginBtn.innerText = 'Login'; loginBtn.disabled = false; }
-        }
-      });
-    }
-
-    if(logoutBtn) {
-      logoutBtn.addEventListener('click', async () => {
-        await db.auth.signOut();
-        window.location.reload();
-      });
-    }
-
-    switchView('dashboard');
-    checkUser();
+    // Initialize System Load
+    fetchProducts();
   </script>
 </body>
 </html>
