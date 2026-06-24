@@ -470,9 +470,7 @@
       if (!confirm("⚠️ Danger: Are you sure you want to delete this product completely from the cloud schema? This action cannot be undone.")) return;
       
       try {
-        // 👇 IMPORTANT: If your database table does not use 'id' as the column name (e.g. 'product_id'), change the word 'id' right below here.
         const { error } = await db.from('products').delete().eq('id', id);
-        
         if (error) throw error;
         alert("Product record securely wiped from cloud sync.");
         await loadSystemData();
@@ -525,7 +523,6 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
         <body>
           <pre>${receiptText}</pre>
           <script>
-            // Allow iOS Safari time to render before triggering the print sheet
             setTimeout(() => { 
               window.print(); 
             }, 800);
@@ -618,7 +615,6 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
         return;
       }
 
-      // Added 'no-select' class below to prevent mobile highlight issues
       salesGrid.innerHTML = filtered.map(product => {
         const { qty } = parseProductStockMetadata(product);
         const isOutOfStock = qty <= 0;
@@ -693,11 +689,11 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
 
     // --- BASKET CORE MUTATIONS ---
     function executeAddToCart(productId) {
-      const p = allProducts.find(item => item.id === productId);
+      const p = allProducts.find(item => String(item.id) === String(productId));
       if (!p) return;
 
       const { qty } = parseProductStockMetadata(p);
-      const cartItem = salesCart.find(c => c.id === productId);
+      const cartItem = salesCart.find(c => String(c.id) === String(productId));
 
       if (cartItem) {
         if (cartItem.quantity >= qty) {
@@ -721,7 +717,7 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
     }
 
     function modifyCartDelta(productId, delta) {
-      const idx = salesCart.findIndex(c => c.id === productId);
+      const idx = salesCart.findIndex(c => String(c.id) === String(productId));
       if (idx === -1) return;
 
       salesCart[idx].quantity += delta;
@@ -875,7 +871,7 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
           let orderTotalBill = 0, orderTotalProfit = 0;
 
           for (const item of salesCart) {
-            const original = allProducts.find(p => p.id === item.id);
+            const original = allProducts.find(p => String(p.id) === String(item.id));
             if (!original) continue;
 
             const { qty, displayBarcode } = parseProductStockMetadata(original);
@@ -896,7 +892,6 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
 
           alert(`🎉 Order Logged Successfully! Printing thermal slip invoice now...`);
           
-          // Triggers the simulated 58mm browser thermal printing layout automatically
           window.generateReceiptWindow();
 
           salesCart = [];
