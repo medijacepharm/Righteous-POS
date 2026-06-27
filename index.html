@@ -483,7 +483,6 @@
     window.generateReceiptWindow = () => {
       if (salesCart.length === 0) return;
       
-      const printWindow = window.open('', '_blank', 'width=340,height=600');
       const now = new Date().toLocaleString();
       
       let receiptText = `
@@ -511,7 +510,19 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
 ================================
 `;
 
-      printWindow.document.write(`
+      // Create a hidden background iframe instead of forcing a window pop-up
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = 'none';
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentWindow.document || iframe.contentDocument;
+      doc.open();
+      doc.write(`
         <html>
         <head>
           <title>Thermal Printer Invoice Output</title>
@@ -524,36 +535,22 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
           <pre>${receiptText}</pre>
           <script>
             setTimeout(() => { 
+              window.focus();
               window.print(); 
-            }, 800);
+            }, 300);
           <\/script>
         </body>
         </html>
       `);
-      printWindow.document.close();
-    };
+      doc.close();
 
-    // --- DYNAMIC STOCK META PACK PARSER ---
-    function parseProductStockMetadata(product) {
-      let qty = 10;
-      let displayBarcode = product.barcode || 'N/A';
-
-      if (product.barcode) {
-        if (product.barcode.includes('|||')) {
-          const blocks = product.barcode.split('|||');
-          qty = parseInt(blocks[0], 10);
-          displayBarcode = blocks[1] || 'N/A';
-        } else if (product.barcode.includes('_')) {
-          const blocks = product.barcode.split('_');
-          const testQty = parseInt(blocks[0], 10);
-          if (!isNaN(testQty)) {
-            qty = testQty;
-            displayBarcode = blocks.slice(1).join('_');
-          }
+      // Clean up the frame DOM resources once system print controller is called
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
         }
-      }
-      return { qty: isNaN(qty) ? 0 : qty, displayBarcode };
-    }
+      }, 2500);
+    };
 
     // --- PIPELINE METRIC REFRESH LOGIC ---
     async function loadSystemData() {
@@ -574,7 +571,7 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
         });
 
         allProducts.forEach(p => {
-          const { qty } = parseProductStockMetadata(p);
+          const qty = p.quantity || 0;
           if(qty <= 3) lowStockCount++;
         });
 
@@ -606,7 +603,7 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
       
       const filtered = allProducts.filter(p => {
         const matchCat = (currentCategoryFilter === 'all') || (p.category === currentCategoryFilter);
-        const { displayBarcode } = parseProductStockMetadata(p);
+        const displayBarcode = p.barcode || 'N/A';
         return matchCat && (p.name.toLowerCase().includes(query) || displayBarcode.toLowerCase().includes(query));
       });
 
@@ -616,7 +613,7 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
       }
 
       salesGrid.innerHTML = filtered.map(product => {
-        const { qty } = parseProductStockMetadata(product);
+        const qty = product.quantity || 0;
         const isOutOfStock = qty <= 0;
         return `
           <div data-add-id="${product.id}" class="no-select bg-gray-900 border border-gray-800 p-3.5 rounded-2xl flex flex-col justify-between cursor-pointer active:scale-95 transition duration-150 ${isOutOfStock ? 'opacity-30 pointer-events-none' : 'hover:border-gray-700'}" style="touch-action: manipulation;">
@@ -644,7 +641,8 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
       }
 
       masterInventoryList.innerHTML = allProducts.map(product => {
-        const { qty, displayBarcode } = parseProductStockMetadata(product);
+        const qty = product.quantity || 0;
+        const displayBarcode = product.barcode || 'N/A';
         return `
           <div class="bg-gray-900 border border-gray-800 p-3.5 rounded-2xl flex justify-between items-center text-xs">
             <div class="min-w-0 flex-1 pr-2">
@@ -692,7 +690,7 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
       const p = allProducts.find(item => String(item.id) === String(productId));
       if (!p) return;
 
-      const { qty } = parseProductStockMetadata(p);
+      const qty = p.quantity || 0;
       const cartItem = salesCart.find(c => String(c.id) === String(productId));
 
       if (cartItem) {
@@ -710,7 +708,7 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
           cost: parseFloat(p.cost_price || 0),
           quantity: 1,
           maxStock: qty,
-          rawBarcode: p.barcode
+          barcode: p.barcode
         });
       }
       syncCartInterface();
@@ -820,10 +818,8 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
           let barcodeLabel = document.getElementById('form-prod-barcode').value.trim();
           if (!barcodeLabel) barcodeLabel = 'BC-' + Math.floor(100000 + Math.random() * 900000);
 
-          const packedBarcodeString = `${qty}|||${barcodeLabel}`;
-
           const { error } = await db.from('products').insert([{
-            name: name, category: category, cost_price: cost, price: sell, barcode: packedBarcodeString, imei_sn: imei, supplier: supplier
+            name: name, category: category, cost_price: cost, price: sell, quantity: qty, barcode: barcodeLabel, imei_sn: imei, supplier: supplier
           }]);
 
           if (error) throw error;
@@ -874,14 +870,13 @@ TOTAL BILL: ${document.getElementById('cart-total-text').innerText}
             const original = allProducts.find(p => String(p.id) === String(item.id));
             if (!original) continue;
 
-            const { qty, displayBarcode } = parseProductStockMetadata(original);
-            const computedNewStock = Math.max(0, qty - item.quantity);
-            const rebuiltPackedString = `${computedNewStock}|||${displayBarcode}`;
+            const currentStock = original.quantity || 0;
+            const computedNewStock = Math.max(0, currentStock - item.quantity);
 
             orderTotalBill += (item.price * item.quantity);
             orderTotalProfit += ((item.price - item.cost) * item.quantity);
 
-            const { error: updateErr } = await db.from('products').update({ barcode: rebuiltPackedString }).eq('id', item.id);
+            const { error: updateErr } = await db.from('products').update({ quantity: computedNewStock }).eq('id', item.id);
             if (updateErr) throw updateErr;
           }
 
