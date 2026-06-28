@@ -164,12 +164,12 @@
             await fetchSalesHistory();
         }
 
-        // Fetch Products from Supabase
+        // Fetch Products from Supabase (Enhanced with explicit error alerts)
         async function fetchProducts() {
             const { data, error } = await _supabase.from('products').select('*').order('name', { ascending: true });
             if (error) {
                 console.error("Database Fetch Error:", error);
-                alert("Failed to load inventory from database.");
+                alert(`Database Load Failure (Products):\nReason: ${error.message}\nCode: ${error.code}`);
             } else {
                 productsMemory = data;
                 renderPOSProducts(productsMemory);
@@ -325,7 +325,7 @@
                 .select();
 
             if (saleError) {
-                alert("Database transmission failed during logging structural sales record header info block.");
+                alert(`Database transmission failed during logging structural sales record header info block.\nReason: ${saleError.message}`);
                 return;
             }
 
@@ -364,7 +364,6 @@
         async function saveProduct(e) {
             e.preventDefault();
             
-            // Clean up accidental empty spaces. If the field is empty, safely pass null.
             const imeiValue = document.getElementById("form-imei").value.trim();
 
             const payload = {
@@ -410,10 +409,13 @@
             });
         }
 
-        // Render Sales History Logs
+        // Render Sales History Logs (Enhanced with explicit error alerts)
         async function fetchSalesHistory() {
             const { data, error } = await _supabase.from('sales').select('*').order('created_at', { ascending: false });
-            if (!error && data) {
+            if (error) {
+                console.error("Database Sales Fetch Error:", error);
+                alert(`Database Load Failure (Sales):\nReason: ${error.message}\nCode: ${error.code}`);
+            } else if (data) {
                 const body = document.getElementById("sales-table-body");
                 body.innerHTML = "";
                 data.forEach(s => {
@@ -440,7 +442,6 @@
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(tabId).classList.remove('hidden');
             
-            // Adjust navigation highlighting styling rules state dynamically
             const buttons = document.querySelectorAll('header nav button');
             buttons.forEach(btn => btn.classList.remove('bg-blue-700', 'bg-blue-800'));
             event.currentTarget.classList.add('bg-blue-700');
