@@ -363,11 +363,15 @@
         // Add new stock product record entry handling via management pane template form
         async function saveProduct(e) {
             e.preventDefault();
+            
+            // Clean up accidental empty spaces. If the field is empty, safely pass null.
+            const imeiValue = document.getElementById("form-imei").value.trim();
+
             const payload = {
-                name: document.getElementById("form-name").value,
-                brand: document.getElementById("form-brand").value,
-                model: document.getElementById("form-model").value || null,
-                imei_or_serial: document.getElementById("form-imei").value || null,
+                name: document.getElementById("form-name").value.trim(),
+                brand: document.getElementById("form-brand").value.trim(),
+                model: document.getElementById("form-model").value.trim() || null,
+                imei_or_serial: imeiValue === "" ? null : imeiValue, 
                 cost_price: parseFloat(document.getElementById("form-cost").value),
                 selling_price: parseFloat(document.getElementById("form-selling").value),
                 stock_quantity: parseInt(document.getElementById("form-qty").value),
@@ -375,8 +379,10 @@
             };
 
             const { error } = await _supabase.from('products').insert([payload]);
+            
             if (error) {
-                alert("Error writing product entry changes down into production infrastructure tables setup. Ensure IMEI values are completely globally unique.");
+                console.error("Supabase Error Details:", error);
+                alert(`Database Reject: ${error.message} \nCode: ${error.code || 'Unknown'}`);
             } else {
                 alert("Successfully saved entry row item data!");
                 document.getElementById("add-product-form").reset();
