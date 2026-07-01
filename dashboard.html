@@ -156,7 +156,9 @@
       const grid = document.getElementById('catalog-grid');
 
       const filtered = localInventory.filter(item => {
-        const matchesSearch = item.name.toLowerCase().includes(search);
+        const nameMatch = item.name.toLowerCase().includes(search);
+        const brandMatch = (item.brand || '').toLowerCase().includes(search);
+        const matchesSearch = nameMatch || brandMatch;
         const matchesCat = catFilter === 'ALL' || item.category === catFilter;
         return matchesSearch && matchesCat;
       });
@@ -170,7 +172,10 @@
             class="p-3 bg-white border border-gray-200 rounded-xl shadow-sm text-left flex flex-col justify-between transition hover:border-amber-500 min-h-[130px] ${outOfStock ? 'opacity-40 cursor-not-allowed' : ''}"
           >
             <div>
-              <span class="text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full uppercase tracking-wider">${prod.category}</span>
+              <div class="flex gap-1 flex-wrap">
+                <span class="text-[8px] font-bold text-amber-600 bg-amber-50 px-1 py-0.5 rounded uppercase tracking-wider">${prod.brand || 'Generic'}</span>
+                <span class="text-[8px] font-bold text-gray-400 bg-gray-100 px-1 py-0.5 rounded uppercase tracking-wider">${prod.category}</span>
+              </div>
               <h3 class="font-bold text-gray-800 mt-1 text-xs line-clamp-2 h-8 overflow-hidden">${prod.name}</h3>
             </div>
             <div class="mt-2 flex justify-between items-baseline w-full border-t pt-1.5 border-gray-50">
@@ -183,10 +188,11 @@
     }
 
     function addItemToCart(id) {
-      const product = localInventory.find(p => p.id === id);
+      // Fixed lookup behavior using explicit String conversions
+      const product = localInventory.find(p => String(p.id) === String(id));
       if (!product || product.stock_quantity <= 0) return;
 
-      const existingCartItem = transactionCart.find(item => item.id === id);
+      const existingCartItem = transactionCart.find(item => String(item.id) === String(id));
 
       if (existingCartItem) {
         if (existingCartItem.quantity >= product.stock_quantity) {
@@ -201,8 +207,8 @@
     }
 
     function updateCartQuantity(id, change) {
-      const cartItem = transactionCart.find(item => item.id === id);
-      const product = localInventory.find(p => p.id === id);
+      const cartItem = transactionCart.find(item => String(item.id) === String(id));
+      const product = localInventory.find(p => String(p.id) === String(id));
       
       if (!cartItem) return;
       cartItem.quantity += change;
@@ -213,7 +219,7 @@
       }
 
       if (cartItem.quantity <= 0) {
-        transactionCart = transactionCart.filter(item => item.id !== id);
+        transactionCart = transactionCart.filter(item => String(item.id) !== String(id));
       }
       syncCartInterface();
     }
