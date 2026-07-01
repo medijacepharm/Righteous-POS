@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Righteous POS - Portal Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-900 min-h-screen flex items-center justify-center p-4">
+
+  <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100">
+    <div class="text-center mb-6">
+      <h1 class="text-xl font-black text-gray-900 tracking-tight">Righteous Phones</h1>
+      <p class="text-xs text-gray-400 mt-1 uppercase font-bold tracking-wider">Management Authentication</p>
+    </div>
+
+    <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Address</label>
+        <input type="email" id="login-email" required placeholder="manager@righteous.com" class="w-full p-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
+        <input type="password" id="login-password" required placeholder="••••••••" class="w-full p-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none" />
+      </div>
+
+      <div id="error-message" class="text-xs font-semibold text-rose-500 bg-rose-50 p-2.5 rounded-lg hidden"></div>
+
+      <button type="submit" id="login-btn" class="w-full py-3.5 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-xl shadow-md transition text-sm uppercase tracking-wide cursor-pointer">
+        Secure Login
+      </button>
+    </form>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://ezdpxjjzemtxbmjyjmfi.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_ddxoPTFqgbR2pNgQBzY_aA_OeldolSz';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Bypasses the login form completely if a valid user session is already saved in the browser cache
+    window.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (session) {
+        window.location.href = 'dashboard.html';
+      }
+    });
+
+    // Handles the outbound email/password submission pipeline
+    async function handleLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('login-btn');
+      const errorDiv = document.getElementById('error-message');
+      
+      btn.disabled = true;
+      btn.innerText = "Authenticating...";
+      errorDiv.classList.add('hidden');
+
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+
+      const { data, error } = await _supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (error) {
+        // Expose exact authentication failure parameters to the layout interface
+        errorDiv.innerText = error.message;
+        errorDiv.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerText = "Secure Login";
+      } else {
+        // Direct safe passage forward into the core transaction engine
+        window.location.href = 'dashboard.html';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sales - Righteous POS</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #0d1117;
+      color: white;
+    }
+
+    .topbar {
+      background: #111827;
+      padding: 15px;
+      text-align: center;
+      color: gold;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 15px;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 5px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: gold;
+      border: none;
+      margin-top: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .cart {
+      margin-top: 20px;
+      background: #1f2937;
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    .item {
+      border-bottom: 1px solid #333;
+      padding: 5px;
+    }
+
+    .total {
+      font-size: 18px;
+      margin-top: 10px;
+      color: lightgreen;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="topbar">Sales (POS System)</div>
+
+<div class="container">
+
+  <select id="product"></select>
+
+  <input type="number" id="qty" placeholder="Quantity">
+
+  <button onclick="addToCart()">Add to Cart</button>
+
+  <div class="cart">
+    <h3>Cart</h3>
+    <div id="cartList"></div>
+    <div class="total" id="total">Total: GH₵ 0</div>
+
+    <select id="payment">
+      <option>Cash</option>
+      <option>Mobile Money</option>
+    </select>
+
+    <button onclick="checkout()">Checkout</button>
+  </div>
+
+</div>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://lgqcxqfeilkabmzpwuxx.supabase.co";
+const SUPABASE_KEY = "sb_publishable_yS09zWqZIMU6pAAJKyFuww_O2my196Y";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let cart = [];
+
+// LOAD PRODUCTS
+async function loadProducts() {
+  const { data } = await supabase.from("products").select("*");
+
+  const select = document.getElementById("product");
+
+  data.forEach(p => {
+    let option = document.createElement("option");
+    option.value = JSON.stringify(p);
+    option.text = `${p.name} - GH₵${p.selling_price}`;
+    select.appendChild(option);
+  });
+}
+
+// ADD TO CART
+function addToCart() {
+  let product = JSON.parse(document.getElementById("product").value);
+  let qty = parseInt(document.getElementById("qty").value);
+
+  cart.push({
+    product,
+    qty,
+    total: product.selling_price * qty
+  });
+
+  renderCart();
+}
+
+// SHOW CART
+function renderCart() {
+  let html = "";
+  let total = 0;
+
+  cart.forEach(item => {
+    html += `
+      <div class="item">
+        ${item.product.name} x ${item.qty} = GH₵ ${item.total}
+      </div>
+    `;
+    total += item.total;
+  });
+
+  document.getElementById("cartList").innerHTML = html;
+  document.getElementById("total").innerText = "Total: GH₵ " + total;
+}
+
+// CHECKOUT (FIXED WITH RECEIPT FLOW)
+async function checkout() {
+
+  const payment = document.getElementById("payment").value;
+
+  for (let item of cart) {
+
+    await supabase.from("sales").insert([{
+      product_id: item.product.id,
+      quantity: item.qty,
+      total_amount: item.total,
+      payment_method: payment
+    }]);
+
+    await supabase
+      .from("products")
+      .update({ quantity: item.product.quantity - item.qty })
+      .eq("id", item.product.id);
+  }
+
+  // ✅ SAVE RECEIPT DATA
+  localStorage.setItem("lastSale", JSON.stringify({
+    items: cart.map(i => ({
+      name: i.product.name,
+      qty: i.qty,
+      total: i.total
+    }))
+  }));
+
+  cart = [];
+  renderCart();
+
+  // ✅ GO TO RECEIPT PAGE
+  window.location.href = "receipt.html";
+}
+
+loadProducts();
+</script>
+
+</body>
+</html>
