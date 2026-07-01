@@ -164,7 +164,8 @@
       });
 
       grid.innerHTML = filtered.map(prod => {
-        const outOfStock = prod.stock_quantity <= 0;
+        const stockAvailable = Number(prod.stock_quantity) || 0;
+        const outOfStock = stockAvailable <= 0;
         return `
           <button 
             onclick="addItemToCart('${prod.id}')"
@@ -179,7 +180,7 @@
               <h3 class="font-bold text-gray-800 mt-1 text-xs line-clamp-2 h-8 overflow-hidden">${prod.name}</h3>
             </div>
             <div class="mt-2 flex justify-between items-baseline w-full border-t pt-1.5 border-gray-50">
-              <span class="text-[10px] text-gray-400">Qty: ${prod.stock_quantity}</span>
+              <span class="text-[10px] text-gray-400">Qty: ${stockAvailable}</span>
               <span class="text-sm font-black text-emerald-600">$${Number(prod.selling_price).toFixed(2)}</span>
             </div>
           </button>
@@ -188,38 +189,55 @@
     }
 
     function addItemToCart(id) {
-      // Fixed lookup behavior using explicit String conversions
-      const product = localInventory.find(p => String(p.id) === String(id));
-      if (!product || product.stock_quantity <= 0) return;
+      const targetId = String(id).trim();
+      const product = localInventory.find(p => String(p.id).trim() === targetId);
+      if (!product) return;
 
-      const existingCartItem = transactionCart.find(item => String(item.id) === String(id));
+      const stockAvailable = Number(product.stock_quantity) || 0;
+      if (stockAvailable <= 0) return;
+
+      const existingCartItem = transactionCart.find(item => String(item.id).trim() === targetId);
 
       if (existingCartItem) {
-        if (existingCartItem.quantity >= product.stock_quantity) {
-          alert(`Floor ceiling reached. Only ${product.stock_quantity} pieces available.`);
+        const currentBasketQty = Number(existingCartItem.quantity) || 0;
+        if (currentBasketQty >= stockAvailable) {
+          alert(`Floor ceiling reached. Only ${stockAvailable} pieces available.`);
           return;
         }
-        existingCartItem.quantity += 1;
+        existingCartItem.quantity = currentBasketQty + 1;
       } else {
-        transactionCart.push({ ...product, quantity: 1 });
+        // Pristine, explicit dictionary push to block property contamination
+        transactionCart.push({
+          id: product.id,
+          name: product.name,
+          brand: product.brand,
+          category: product.category,
+          selling_price: Number(product.selling_price) || 0,
+          cost_price: Number(product.cost_price) || 0,
+          quantity: 1
+        });
       }
       syncCartInterface();
     }
 
     function updateCartQuantity(id, change) {
-      const cartItem = transactionCart.find(item => String(item.id) === String(id));
-      const product = localInventory.find(p => String(p.id) === String(id));
-      
+      const targetId = String(id).trim();
+      const cartItem = transactionCart.find(item => String(item.id).trim() === targetId);
       if (!cartItem) return;
-      cartItem.quantity += change;
 
-      if (cartItem.quantity > product.stock_quantity) {
-        alert("Cannot scale higher than absolute available stock.");
-        cartItem.quantity = product.stock_quantity;
-      }
+      const product = localInventory.find(p => String(p.id).trim() === targetId);
+      const stockAvailable = product ? (Number(product.stock_quantity) || 0) : 999;
 
-      if (cartItem.quantity <= 0) {
-        transactionCart = transactionCart.filter(item => String(item.id) !== String(id));
+      const currentQty = Number(cartItem.quantity) || 0;
+      const newQty = currentQty + change;
+
+      if (newQty > stockAvailable) {
+        alert(`Cannot scale higher than absolute available stock.`);
+        cartItem.quantity = stockAvailable;
+      } else if (newQty <= 0) {
+        transactionCart = transactionCart.filter(item => String(item.id).trim() !== targetId);
+      } else {
+        cartItem.quantity = newQty;
       }
       syncCartInterface();
     }
@@ -231,12 +249,10 @@
 
     function syncCartInterface() {
       const container = document.getElementById('cart-container');
-      const emptyMsg = document.getElementById('empty-cart-msg');
       const submitBtn = document.getElementById('checkout-submit-btn');
 
       if (transactionCart.length === 0) {
-        container.innerHTML = '';
-        container.appendChild(emptyMsg);
+        container.innerHTML = '<p id="empty-cart-msg" class="text-gray-400 text-center py-8 text-sm">Basket empty. Tap items to add.</p>';
         submitBtn.disabled = true;
         submitBtn.className = "w-full py-4 text-center rounded-xl font-bold text-white bg-gray-300 cursor-not-allowed text-sm uppercase";
         document.getElementById('subtotal-val').innerText = "$0.00";
@@ -244,22 +260,22 @@
         return;
       }
 
-      if (emptyMsg.parentNode) emptyMsg.remove();
-
       let grandTotal = 0;
       container.innerHTML = transactionCart.map(item => {
-        const itemTotal = item.selling_price * item.quantity;
+        const price = Number(item.selling_price) || 0;
+        const qty = Number(item.quantity) || 0;
+        const itemTotal = price * qty;
         grandTotal += itemTotal;
         return `
           <div class="flex justify-between items-center bg-gray-50 border border-gray-100 p-2.5 rounded-xl">
             <div class="flex-1 min-w-0 pr-2">
               <h4 class="font-bold text-gray-800 text-xs truncate">${item.name}</h4>
-              <p class="text-[10px] text-gray-400 mt-0.5">$${Number(item.selling_price).toFixed(2)} each</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">$${price.toFixed(2)} each</p>
             </div>
             <div class="flex items-center gap-2">
               <div class="flex items-center border border-gray-200 bg-white rounded-lg overflow-hidden">
                 <button onclick="updateCartQuantity('${item.id}', -1)" class="px-2 py-0.5 bg-gray-50 text-gray-500 hover:bg-gray-100 font-bold text-xs">-</button>
-                <span class="px-1.5 text-xs font-bold text-gray-800">${item.quantity}</span>
+                <span class="px-1.5 text-xs font-bold text-gray-800">${qty}</span>
                 <button onclick="updateCartQuantity('${item.id}', 1)" class="px-2 py-0.5 bg-gray-50 text-gray-500 hover:bg-gray-100 font-bold text-xs">+</button>
               </div>
               <span class="font-bold text-xs text-gray-700 w-14 text-right">$${itemTotal.toFixed(2)}</span>
