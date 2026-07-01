@@ -10,11 +10,19 @@
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    
+    /* Print Styles for Thermal Receipts */
+    @media print {
+      body * { visibility: hidden; }
+      #receipt-modal, #receipt-modal * { visibility: visible; }
+      #receipt-modal { position: absolute; left: 0; top: 0; width: 100%; max-width: 80mm; background: white; color: black; padding: 0; }
+      .no-print { display: none !important; }
+    }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col font-sans antialiased">
 
-  <div class="bg-gray-900 p-4 flex flex-col md:flex-row justify-between items-center gap-3 shadow-md sticky top-0 z-50">
+  <div class="bg-gray-900 p-4 flex flex-col md:flex-row justify-between items-center gap-3 shadow-md sticky top-0 z-40">
     <div class="text-center md:text-left">
       <span class="text-lg md:text-xl text-amber-400 font-bold tracking-tight">Righteous Phones & Accessories</span>
     </div>
@@ -62,7 +70,7 @@
           <button onclick="clearCart()" class="text-xs font-semibold text-rose-500 hover:underline">Clear All</button>
         </div>
         
-        <div id="cart-container" class="space-y-3 overflow-y-auto max-h-[30vh] md:max-h-[45vh] pr-1 custom-scrollbar">
+        <div id="cart-container" class="space-y-3 overflow-y-auto max-h-[25vh] md:max-h-[45vh] pr-1 custom-scrollbar">
           <p id="empty-cart-msg" class="text-gray-400 text-center py-8 text-sm">Basket empty. Tap items to add.</p>
         </div>
       </div>
@@ -95,6 +103,17 @@
         >
           Complete Processing
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="receipt-modal-backdrop" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl flex flex-col max-h-[90vh]">
+      <div id="receipt-modal" class="overflow-y-auto flex-1 font-mono text-xs text-gray-800 p-2 border border-gray-100 rounded-lg custom-scrollbar">
+        </div>
+      <div class="mt-4 grid grid-cols-2 gap-3 no-print">
+        <button onclick="window.print()" class="py-2.5 bg-gray-900 text-white font-bold rounded-xl text-xs uppercase hover:bg-gray-800 tracking-wider">Print Slip</button>
+        <button onclick="closeReceiptModal()" class="py-2.5 bg-gray-200 text-gray-700 font-bold rounded-xl text-xs uppercase hover:bg-gray-300 tracking-wider">Dismiss</button>
       </div>
     </div>
   </div>
@@ -134,7 +153,8 @@
       const grid = document.getElementById('catalog-grid');
 
       const filtered = localInventory.filter(item => {
-        const matchesSearch = (item.name || '').toLowerCase().includes(search) || (item.brand || '').toLowerCase().includes(search);
+        const itemTitle = item.name || item.title || '';
+        const matchesSearch = itemTitle.toLowerCase().includes(search) || (item.brand || '').toLowerCase().includes(search);
         const matchesCat = catFilter === 'ALL' || item.category === catFilter;
         return matchesSearch && matchesCat;
       });
@@ -142,6 +162,7 @@
       grid.innerHTML = filtered.map(prod => {
         const stockAvailable = Number(prod.stock_quantity) || 0;
         const outOfStock = stockAvailable <= 0;
+        const displayName = prod.name || prod.title || 'Unknown Item';
         return `
           <button onclick="addItemToCart('${prod.id}')" ${outOfStock ? 'disabled' : ''} class="p-3 bg-white border border-gray-200 rounded-xl shadow-sm text-left flex flex-col justify-between transition hover:border-amber-500 min-h-[130px] ${outOfStock ? 'opacity-40 cursor-not-allowed' : ''}">
             <div>
@@ -149,7 +170,7 @@
                 <span class="text-[8px] font-bold text-amber-600 bg-amber-50 px-1 py-0.5 rounded uppercase tracking-wider">${prod.brand || 'Generic'}</span>
                 <span class="text-[8px] font-bold text-gray-400 bg-gray-100 px-1 py-0.5 rounded uppercase tracking-wider">${prod.category || 'Item'}</span>
               </div>
-              <h3 class="font-bold text-gray-800 mt-1 text-xs line-clamp-2 h-8 overflow-hidden">${prod.name}</h3>
+              <h3 class="font-bold text-gray-800 mt-1 text-xs line-clamp-2 h-8 overflow-hidden">${displayName}</h3>
             </div>
             <div class="mt-2 flex justify-between items-baseline w-full border-t pt-1.5 border-gray-50">
               <span class="text-[10px] text-gray-400">Qty: ${stockAvailable}</span>
@@ -179,7 +200,7 @@
       } else {
         transactionCart.push({
           id: product.id,
-          name: product.name,
+          name: product.name || product.title || 'Unknown Item',
           brand: product.brand,
           category: product.category,
           selling_price: Number(product.selling_price) || 0,
@@ -276,12 +297,13 @@
 
         if (invoiceError) throw invoiceError;
 
-        // FIXED: Uses 'price' column instead of 'price_at_sale' to match database structure
+        // Populate both columns to safeguard against caching variance
         const lineItems = transactionCart.map(item => ({
           sale_id: invoice.id,
           product_id: item.id,
           quantity: item.basketQuantity,
-          price: item.selling_price
+          price: item.selling_price,
+          price_at_sale: item.selling_price
         }));
 
         const { error: batchError } = await _supabase.from('sale_items').insert(lineItems);
@@ -295,7 +317,7 @@
           }
         }
 
-        alert("Transaction complete! Inventory synced successfully.");
+        renderThermalReceipt(invoice.id, totalValue);
         clearCart();
         await pullFreshInventory(); 
       } catch (err) {
@@ -303,6 +325,54 @@
       } finally {
         submitBtn.innerText = "Complete Processing";
       }
+    }
+
+    function renderThermalReceipt(invoiceId, totalValue) {
+      const timeStr = new Date().toLocaleString();
+      let itemsLinesHtml = '';
+      
+      transactionCart.forEach(item => {
+        const rowTotal = item.selling_price * item.basketQuantity;
+        itemsLinesHtml += `
+          <div class="flex justify-between my-1">
+            <span>${item.basketQuantity}x ${item.name.substring(0, 18)}</span>
+            <span>$${rowTotal.toFixed(2)}</span>
+          </div>
+        `;
+      });
+
+      const modalContent = `
+        <div class="text-center border-b border-dashed pb-3 mb-3">
+          <h2 class="text-sm font-black uppercase tracking-wider">Righteous Phones & Accessories</h2>
+          <p class="text-[10px] text-gray-500 mt-0.5">Retail & Device Specialists</p>
+          <p class="text-[9px] text-gray-400 mt-2">Inv ID: #${invoiceId.toString().substring(0,8)}</p>
+          <p class="text-[9px] text-gray-400">${timeStr}</p>
+        </div>
+        <div class="border-b border-dashed pb-3 mb-3 text-[11px]">
+          ${itemsLinesHtml}
+        </div>
+        <div class="space-y-1 text-xs font-bold mb-4">
+          <div class="flex justify-between">
+            <span>Payment Method:</span>
+            <span class="uppercase">${selectedPayment}</span>
+          </div>
+          <div class="flex justify-between text-sm font-black pt-1 border-t border-double">
+            <span>TOTAL AMOUNT:</span>
+            <span>$${totalValue.toFixed(2)}</span>
+          </div>
+        </div>
+        <div class="text-center pt-2 border-t border-dashed text-[10px] text-gray-500">
+          <p>Thank you for shopping with us!</p>
+          <p class="mt-1 font-sans font-semibold text-[8px]">Powered by Righteous POS</p>
+        </div>
+      `;
+
+      document.getElementById('receipt-modal').innerHTML = modalContent;
+      document.getElementById('receipt-modal-backdrop').classList.remove('hidden');
+    }
+
+    function closeReceiptModal() {
+      document.getElementById('receipt-modal-backdrop').classList.add('hidden');
     }
 
     async function triggerLogout(e) {

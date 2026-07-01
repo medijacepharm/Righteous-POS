@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col font-sans antialiased">
 
-  <div class="bg-gray-900 p-4 flex flex-col md:flex-row justify-between items-center gap-3 shadow-md sticky top-0 z-50">
+  <div class="bg-gray-900 p-4 flex flex-col md:flex-row justify-between items-center gap-3 shadow-md sticky top-0 z-40">
     <div class="text-center md:text-left">
       <span class="text-lg md:text-xl text-amber-400 font-bold tracking-tight">Righteous Phones & Accessories</span>
     </div>
@@ -139,10 +139,11 @@
         const markup = (item.selling_price || 0) - (item.cost_price || 0);
         const marginPct = item.cost_price > 0 ? (markup / item.cost_price) * 100 : 0;
         const lowStock = item.stock_quantity <= 2;
+        const itemDisplayName = item.name || item.title || 'Unknown Item';
         return `
           <tr class="hover:bg-gray-50 transition">
             <td class="p-4">
-              <p class="font-bold text-gray-900 text-xs md:text-sm">${item.name}</p>
+              <p class="font-bold text-gray-900 text-xs md:text-sm">${itemDisplayName}</p>
               <span class="text-[9px] font-bold text-amber-600 bg-amber-50 px-1 py-0.5 rounded-md uppercase mr-1">${item.brand || 'Generic'}</span>
               <span class="text-[9px] font-bold text-gray-400 uppercase">${item.category || 'Item'}</span>
             </td>
@@ -178,11 +179,13 @@
       const btn = document.getElementById('form-submit-btn');
       btn.disabled = true; btn.innerText = "Registering...";
       
+      const titleInput = document.getElementById('form-name').value;
       const brandVal = document.getElementById('form-brand').value.trim();
       
-      // FIXED: brand defaults to 'Generic' to satisfy database Not-Null database constraint
+      // Fixed field payload mapping to account for fallback rules
       const payload = {
-        name: document.getElementById('form-name').value,
+        name: titleInput,
+        title: titleInput, 
         brand: brandVal || 'Generic',
         category: document.getElementById('form-category').value,
         cost_price: parseFloat(document.getElementById('form-cost').value) || 0,
