@@ -14,7 +14,6 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col font-sans antialiased">
 
-  <!-- Navigation Bar -->
   <div class="bg-gray-900 p-4 flex flex-col md:flex-row justify-between items-center gap-3 shadow-md sticky top-0 z-50">
     <div class="text-center md:text-left">
       <span class="text-lg md:text-xl text-amber-400 font-bold tracking-tight">Righteous Phones & Accessories</span>
@@ -28,37 +27,46 @@
     </div>
   </div>
 
-  <!-- Main POS Layout -->
   <div class="flex flex-col md:flex-row flex-1 h-auto md:h-[calc(100vh-62px)] overflow-y-auto md:overflow-hidden">
     
-    <!-- Left Catalog -->
     <div class="w-full md:w-2/3 p-4 md:p-6 flex flex-col h-auto md:h-full border-b md:border-b-0 md:border-r border-gray-200">
       <div class="mb-4 flex flex-col sm:flex-row gap-3">
-        <input type="text" id="search-input" placeholder="Search devices, accessories or brand..." class="flex-1 p-3 bg-white border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm" />
-        <select id="category-filter" class="p-3 bg-white border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm text-gray-600">
+        <input 
+          type="text" 
+          id="search-input"
+          placeholder="Search devices, accessories or brand..." 
+          class="flex-1 p-3 bg-white border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+        />
+        <select 
+          id="category-filter"
+          class="p-3 bg-white border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm text-gray-600"
+        >
           <option value="ALL">All Categories</option>
           <option value="Phone">Smartphones</option>
           <option value="Accessory">Accessories</option>
           <option value="Tablet">Tablets</option>
         </select>
       </div>
-      <div id="loading-state" class="text-center py-12 text-gray-500 font-medium">Connecting to Righteous-POS-DB...</div>
+
+      <div id="loading-state" class="text-center py-12 text-gray-500 font-medium">
+        Connecting to Righteous-POS-DB...
+      </div>
+
       <div id="catalog-grid" class="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 overflow-y-auto flex-1 pr-1 custom-scrollbar hidden"></div>
     </div>
 
-    <!-- Right Basket -->
     <div class="w-full md:w-1/3 bg-white shadow-2xl p-4 md:p-6 flex flex-col h-auto md:h-full justify-between sticky bottom-0 md:relative border-t md:border-t-0">
       <div>
         <div class="border-b pb-3 mb-4 flex justify-between items-center">
           <h2 class="text-base md:text-lg font-bold text-gray-800">Current Basket</h2>
           <button onclick="clearCart()" class="text-xs font-semibold text-rose-500 hover:underline">Clear All</button>
         </div>
+        
         <div id="cart-container" class="space-y-3 overflow-y-auto max-h-[30vh] md:max-h-[45vh] pr-1 custom-scrollbar">
           <p id="empty-cart-msg" class="text-gray-400 text-center py-8 text-sm">Basket empty. Tap items to add.</p>
         </div>
       </div>
 
-      <!-- Checkout Actions -->
       <div class="border-t pt-4 space-y-4 bg-white mt-4">
         <div>
           <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Payment Channel</label>
@@ -68,6 +76,7 @@
             <button onclick="setPaymentMethod('Card')" id="btn-Card" class="pay-btn p-2 text-xs font-bold border rounded-xl transition bg-white text-gray-700 hover:bg-gray-50">Card</button>
           </div>
         </div>
+
         <div class="bg-gray-50 p-3 md:p-4 rounded-xl border border-gray-100 space-y-1.5">
           <div class="flex justify-between text-xs text-gray-500 font-medium">
             <span>Subtotal Value:</span> <span id="subtotal-val">$0.00</span>
@@ -77,11 +86,16 @@
             <span id="total-val" class="text-xl md:text-2xl font-black text-emerald-600">$0.00</span>
           </div>
         </div>
-        <button id="checkout-submit-btn" onclick="submitTransaction()" disabled class="w-full py-3.5 text-center rounded-xl font-bold text-white shadow-lg transition bg-gray-300 cursor-not-allowed text-xs md:text-sm tracking-wide uppercase">
+
+        <button 
+          id="checkout-submit-btn" 
+          onclick="submitTransaction()" 
+          disabled 
+          class="w-full py-3.5 text-center rounded-xl font-bold text-white shadow-lg transition bg-gray-300 cursor-not-allowed text-xs md:text-sm tracking-wide uppercase"
+        >
           Complete Processing
         </button>
       </div>
-
     </div>
   </div>
 
@@ -105,7 +119,7 @@
       document.getElementById('loading-state').classList.remove('hidden');
       document.getElementById('catalog-grid').classList.add('hidden');
 
-      const { data, error } = await _supabase.from('products').select('*').order('title', { ascending: true });
+      const { data, error } = await _supabase.from('products').select('*').order('name', { ascending: true });
       if (error) { alert("Database error: " + error.message); return; }
 
       localInventory = data || [];
@@ -120,13 +134,13 @@
       const grid = document.getElementById('catalog-grid');
 
       const filtered = localInventory.filter(item => {
-        const matchesSearch = (item.title || '').toLowerCase().includes(search) || (item.brand || '').toLowerCase().includes(search);
+        const matchesSearch = (item.name || '').toLowerCase().includes(search) || (item.brand || '').toLowerCase().includes(search);
         const matchesCat = catFilter === 'ALL' || item.category === catFilter;
         return matchesSearch && matchesCat;
       });
 
       grid.innerHTML = filtered.map(prod => {
-        const stockAvailable = Number(prod.quantity) || 0;
+        const stockAvailable = Number(prod.stock_quantity) || 0;
         const outOfStock = stockAvailable <= 0;
         return `
           <button onclick="addItemToCart('${prod.id}')" ${outOfStock ? 'disabled' : ''} class="p-3 bg-white border border-gray-200 rounded-xl shadow-sm text-left flex flex-col justify-between transition hover:border-amber-500 min-h-[130px] ${outOfStock ? 'opacity-40 cursor-not-allowed' : ''}">
@@ -135,11 +149,11 @@
                 <span class="text-[8px] font-bold text-amber-600 bg-amber-50 px-1 py-0.5 rounded uppercase tracking-wider">${prod.brand || 'Generic'}</span>
                 <span class="text-[8px] font-bold text-gray-400 bg-gray-100 px-1 py-0.5 rounded uppercase tracking-wider">${prod.category || 'Item'}</span>
               </div>
-              <h3 class="font-bold text-gray-800 mt-1 text-xs line-clamp-2 h-8 overflow-hidden">${prod.title}</h3>
+              <h3 class="font-bold text-gray-800 mt-1 text-xs line-clamp-2 h-8 overflow-hidden">${prod.name}</h3>
             </div>
             <div class="mt-2 flex justify-between items-baseline w-full border-t pt-1.5 border-gray-50">
               <span class="text-[10px] text-gray-400">Qty: ${stockAvailable}</span>
-              <span class="text-sm font-black text-emerald-600">$${Number(prod.retail_price).toFixed(2)}</span>
+              <span class="text-sm font-black text-emerald-600">$${Number(prod.selling_price).toFixed(2)}</span>
             </div>
           </button>
         `;
@@ -151,7 +165,7 @@
       const product = localInventory.find(p => String(p.id).trim() === targetId);
       if (!product) return;
 
-      const stockAvailable = Number(product.quantity) || 0;
+      const stockAvailable = Number(product.stock_quantity) || 0;
       if (stockAvailable <= 0) return;
 
       const existingCartItem = transactionCart.find(item => String(item.id).trim() === targetId);
@@ -165,10 +179,10 @@
       } else {
         transactionCart.push({
           id: product.id,
-          title: product.title,
+          name: product.name,
           brand: product.brand,
           category: product.category,
-          retail_price: Number(product.retail_price) || 0,
+          selling_price: Number(product.selling_price) || 0,
           basketQuantity: 1
         });
       }
@@ -181,7 +195,7 @@
       if (!cartItem) return;
 
       const product = localInventory.find(p => String(p.id).trim() === targetId);
-      const stockAvailable = product ? (Number(product.quantity) || 0) : 0;
+      const stockAvailable = product ? (Number(product.stock_quantity) || 0) : 0;
 
       const newQty = cartItem.basketQuantity + change;
 
@@ -213,13 +227,13 @@
 
       let grandTotal = 0;
       container.innerHTML = transactionCart.map(item => {
-        const itemTotal = item.retail_price * item.basketQuantity;
+        const itemTotal = item.selling_price * item.basketQuantity;
         grandTotal += itemTotal;
         return `
           <div class="flex justify-between items-center bg-gray-50 border border-gray-100 p-2.5 rounded-xl">
             <div class="flex-1 min-w-0 pr-2">
-              <h4 class="font-bold text-gray-800 text-xs truncate">${item.title}</h4>
-              <p class="text-[10px] text-gray-400 mt-0.5">$${item.retail_price.toFixed(2)} each</p>
+              <h4 class="font-bold text-gray-800 text-xs truncate">${item.name}</h4>
+              <p class="text-[10px] text-gray-400 mt-0.5">$${item.selling_price.toFixed(2)} each</p>
             </div>
             <div class="flex items-center gap-2">
               <div class="flex items-center border border-gray-200 bg-white rounded-lg overflow-hidden">
@@ -252,32 +266,32 @@
       const submitBtn = document.getElementById('checkout-submit-btn');
       submitBtn.disabled = true; submitBtn.innerText = "Processing...";
 
-      const totalValue = transactionCart.reduce((sum, item) => sum + (item.retail_price * item.basketQuantity), 0);
+      const totalValue = transactionCart.reduce((sum, item) => sum + (item.selling_price * item.basketQuantity), 0);
 
       try {
         const { data: invoice, error: invoiceError } = await _supabase
           .from('sales')
-          .insert([{ total_amount: totalValue, payment_channel: selectedPayment }])
+          .insert([{ total_amount: totalValue, payment_method: selectedPayment }])
           .select().single();
 
         if (invoiceError) throw invoiceError;
 
+        // FIXED: Uses 'price' column instead of 'price_at_sale' to match database structure
         const lineItems = transactionCart.map(item => ({
           sale_id: invoice.id,
           product_id: item.id,
           quantity: item.basketQuantity,
-          price_at_sale: item.retail_price
+          price: item.selling_price
         }));
 
         const { error: batchError } = await _supabase.from('sale_items').insert(lineItems);
         if (batchError) throw batchError;
 
-        // Atomically update inventory quantities locally/remotely
         for (const item of transactionCart) {
           const product = localInventory.find(p => String(p.id) === String(item.id));
           if (product) {
-            const newQty = Math.max(0, product.quantity - item.basketQuantity);
-            await _supabase.from('products').update({ quantity: newQty }).eq('id', item.id);
+            const newQty = Math.max(0, product.stock_quantity - item.basketQuantity);
+            await _supabase.from('products').update({ stock_quantity: newQty }).eq('id', item.id);
           }
         }
 
