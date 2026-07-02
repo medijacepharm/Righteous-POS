@@ -3,191 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Righteous POS - Dashboard</title>
+    <title>Righteous POS - Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100 text-gray-900 font-sans antialiased">
+<body class="bg-gray-100 text-gray-900 font-sans antialiased min-h-screen pb-28">
 
     <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-50">
         <div class="max-w-xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold tracking-wide">📱 Righteous POS</h1>
-            <span id="cashierBadge" class="bg-blue-700 text-xs px-3 py-1 rounded-full font-semibold font-mono">Loading...</span>
+            <div class="flex items-center gap-2">
+                <span class="text-xl">📱</span>
+                <h1 class="text-xl font-bold tracking-wide">Righteous POS</h1>
+            </div>
+            <span class="bg-blue-700 text-[10px] px-2.5 py-1 rounded-full font-mono uppercase tracking-wider">System Admin (Admin)</span>
         </div>
     </header>
 
-    <main class="max-w-xl mx-auto p-4 space-y-6 pb-28">
-        
-        <section class="bg-white p-5 rounded-xl shadow-xs border border-gray-200">
-            <h2 class="text-lg font-bold text-gray-800 mb-3">1. Select Product</h2>
+    <main class="max-w-xl mx-auto p-4 space-y-4">
+
+        <div class="bg-white p-5 rounded-xl shadow-xs border border-gray-200 space-y-4">
+            <h2 class="text-base font-bold text-gray-800 flex items-center gap-1.5">
+                <span class="text-blue-600 font-mono">1.</span> Select Product
+            </h2>
             
-            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Product Item</label>
-            <select id="productSelect" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
-                <option value="1" data-serialized="true">iPhone 15 Pro Max 256GB (Requires IMEI)</option>
-                <option value="2" data-serialized="true">Galaxy S24 Ultra 512GB (Requires IMEI)</option>
-                <option value="3" data-serialized="false">20W USB-C Power Adapter (Accessory)</option>
-                <option value="4" data-serialized="false">Shockproof Clear Case iPhone 15 (Accessory)</option>
-            </select>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wide">Product Item</label>
+                <select id="productSelect" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm">
+                    <option value="">Loading live inventory goods...</option>
+                </select>
+            </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Quantity</label>
-                    <input type="number" id="itemQuantity" value="1" min="1" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wide">Quantity</label>
+                    <input type="number" id="quantityInput" value="1" min="1" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Discount (Optional)</label>
-                    <input type="number" id="itemDiscount" value="0.00" min="0" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wide">Discount (Optional)</label>
+                    <input type="number" id="discountInput" value="0.00" min="0" step="0.01" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-sm">
                 </div>
             </div>
-        </section>
+        </div>
 
-        <section id="imeiSection" class="bg-white p-5 rounded-xl shadow-xs border border-gray-200">
-            <h2 class="text-lg font-bold text-gray-800 mb-1">2. Hardware Tracking</h2>
-            <p class="text-xs text-gray-500 mb-3">Required for smartphones to track warranties.</p>
+        <div class="bg-white p-5 rounded-xl shadow-xs border border-gray-200 space-y-4">
+            <h2 class="text-base font-bold text-gray-800 flex items-center gap-1.5">
+                <span class="text-blue-600 font-mono">2.</span> Payment Details
+            </h2>
             
-            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Device IMEI / Serial Number</label>
-            <input type="text" id="imeiInput" placeholder="e.g. 351234567890123" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </section>
-
-        <section class="bg-white p-5 rounded-xl shadow-xs border border-gray-200">
-            <h2 class="text-lg font-bold text-gray-800 mb-3">3. Payment Details</h2>
-            
-            <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Method</label>
-                    <select id="paymentMethod" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wide">Method</label>
+                    <select id="paymentMethod" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm">
                         <option value="Mobile Money">Mobile Money</option>
                         <option value="Cash">Cash</option>
-                        <option value="Card">Visa / Mastercard</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Total Expected Price</label>
-                    <input type="number" id="paymentAmount" placeholder="Amount to charge" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wide">Total Expected Price</label>
+                    <div id="totalDisplay" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg font-black text-gray-800 text-base flex items-center">
+                        GHS 0.00
+                    </div>
                 </div>
             </div>
-
-            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Reference Number / Txn ID</label>
-            <input type="text" id="paymentRef" placeholder="e.g. MOMO-TXNID-8812" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </section>
-
-        <div id="terminalLog" class="bg-black text-green-400 p-4 rounded-xl font-mono text-xs shadow-inner whitespace-pre-line leading-relaxed">
-            > POS terminal ready. Awaiting cart placement...
         </div>
 
     </main>
 
-    <footer class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-xl z-50">
-        <div class="max-w-xl mx-auto flex gap-2">
-            <a href="products.html" class="bg-gray-100 border border-gray-200 hover:bg-gray-200 text-gray-700 py-4 px-3 rounded-xl font-bold text-xs flex flex-col items-center justify-center shadow-sm min-w-[65px]">
-                <span>📦</span><span>Stock</span>
+    <footer class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-xl z-40">
+        <div class="max-w-xl mx-auto flex gap-3 items-center">
+            
+            <a href="products.html" class="flex flex-col items-center justify-center border border-gray-200 rounded-xl p-2 text-gray-600 min-w-[64px] hover:bg-gray-50 transition active:scale-95">
+                <span class="text-lg">📦</span>
+                <span class="text-[10px] font-bold mt-0.5">Stock</span>
             </a>
-            <a href="sales.html" class="bg-gray-100 border border-gray-200 hover:bg-gray-200 text-gray-700 py-4 px-3 rounded-xl font-bold text-xs flex flex-col items-center justify-center shadow-sm min-w-[65px]">
-                <span>📊</span><span>Sales</span>
+
+            <a href="sales.html" class="flex flex-col items-center justify-center border border-gray-200 rounded-xl p-2 text-gray-600 min-w-[64px] hover:bg-gray-50 transition active:scale-95">
+                <span class="text-lg">📊</span>
+                <span class="text-[10px] font-bold mt-0.5">Sales</span>
             </a>
-            <button id="checkoutBtn" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-98 transition text-white py-4 px-6 rounded-xl font-bold text-lg shadow-md tracking-wide cursor-pointer">
+
+            <button id="checkoutBtn" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-xl shadow-md transition active:scale-98 flex items-center justify-center gap-2 cursor-pointer text-sm tracking-wide">
                 🛒 Checkout
             </button>
+
         </div>
     </footer>
 
     <script>
-        // SESSION GUARD: Kick unauthenticated users back to the lock screen instantly
+        // SESSION GUARD: Protect routing terminals
         if (!localStorage.getItem('active_staff_id')) {
             window.location.href = 'login.html';
         }
 
-        // Supabase Live Client Connection Core Configurations
         const SUPABASE_URL = 'https://ezdpxjjzemtxbmjyjmfi.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6ZHB4amp6ZW10eGJtanlqbWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzY5NDYsImV4cCI6MjA5NzM1Mjk0Nn0.ADcwJuefJxBC2h4iQHsTZ_Nixmlql_cGgGTIucxxgDw';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // DOM elements
-        const productSelect = document.getElementById('productSelect');
-        const imeiSection = document.getElementById('imeiSection');
+        const prodSelect = document.getElementById('productSelect');
+        const qtyInput = document.getElementById('quantityInput');
+        const discInput = document.getElementById('discountInput');
+        const totalDisplay = document.getElementById('totalDisplay');
         const checkoutBtn = document.getElementById('checkoutBtn');
-        const logTerminal = document.getElementById('terminalLog');
 
-        // Render active logged-in user profile badge dynamically
-        document.getElementById('cashierBadge').textContent = localStorage.getItem('active_staff_name') || 'Admin';
+        let catalogCache = [];
 
-        // Toggle IMEI box view depending on whether item selected is a smartphone
-        productSelect.addEventListener('change', () => {
-            const selectedOption = productSelect.options[productSelect.selectedIndex];
-            const isSerialized = selectedOption.getAttribute('data-serialized') === 'true';
-            imeiSection.style.display = isSerialized ? 'block' : 'none';
-        });
+        // Load active retail warehouse inventory products array
+        async function loadTerminalCatalog() {
+            try {
+                const { data: products, error } = await supabaseClient
+                    .from('products')
+                    .select('*')
+                    .order('name');
 
-        function addLog(message, isFailure = false) {
-            const trackingColor = isFailure ? 'text-red-400' : 'text-green-400';
-            logTerminal.innerHTML += `<br><span class="${trackingColor}">> ${message}</span>`;
-            window.scrollTo(0, document.body.scrollHeight);
+                if (error) throw error;
+                catalogCache = products;
+
+                prodSelect.innerHTML = '<option value="">-- Choose Product --</option>' +
+                    products.map(p => `<option value="${p.id}">${p.brand} ${p.name} (GHS ${parseFloat(p.selling_price).toFixed(2)})</option>`).join('');
+
+            } catch (err) {
+                alert(`Ecosystem Error: ${err.message}`);
+            }
         }
 
-        // Primary Checkout Processor Function Engine Event Call
+        // Calculate pricing parameters live automatically
+        function recalculateTicketPricing() {
+            const matchedItem = catalogCache.find(p => p.id == prodSelect.value);
+            if (!matchedItem) {
+                totalDisplay.textContent = "GHS 0.00";
+                return;
+            }
+            const qty = parseInt(qtyInput.value) || 1;
+            const discount = parseFloat(discInput.value) || 0;
+            const absoluteTotal = (matchedItem.selling_price * qty) - discount;
+            totalDisplay.textContent = `GHS ${Math.max(0, absoluteTotal).toFixed(2)}`;
+        }
+
+        prodSelect.addEventListener('change', recalculateTicketPricing);
+        qtyInput.addEventListener('input', recalculateTicketPricing);
+        discInput.addEventListener('input', recalculateTicketPricing);
+
+        // CHECKOUT LOGIC: Automated zero-typing pipeline execution engine
         checkoutBtn.addEventListener('click', async () => {
+            const targetId = prodSelect.value;
+            const qty = parseInt(qtyInput.value) || 0;
+            const discount = parseFloat(discInput.value) || 0;
+            const method = document.getElementById('paymentMethod').value;
+
+            if (!targetId || qty <= 0) return alert("Please specify a valid product item and quantity.");
+
+            const matchedItem = catalogCache.find(p => p.id == targetId);
+            if (!matchedItem) return;
+
             checkoutBtn.disabled = true;
-            addLog("Reading configuration parameters...");
-
-            const productId = parseInt(productSelect.value);
-            const quantity = parseInt(document.getElementById('itemQuantity').value);
-            const discount = parseFloat(document.getElementById('itemDiscount').value) || 0;
-            const imeiVal = document.getElementById('imeiInput').value.trim();
-            
-            const selectedOption = productSelect.options[productSelect.selectedIndex];
-            const isSerialized = selectedOption.getAttribute('data-serialized') === 'true';
-
-            // Build array logic parsing structures
-            const imeisArray = (isSerialized && imeiVal) ? [imeiVal] : [];
-            
-            const cartPayload = [{
-                product_id: productId,
-                quantity: quantity,
-                imeis: imeisArray,
-                discount: discount
-            }];
-
-            const payMethod = document.getElementById('paymentMethod').value;
-            const payAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
-            const payRef = document.getElementById('paymentRef').value.trim();
-
-            const paymentsPayload = [{
-                method: payMethod,
-                amount: payAmount,
-                ref: payRef || null
-            }];
+            checkoutBtn.textContent = "Processing Transaction...";
 
             try {
-                addLog(`Opening gateway to pipeline engine...`);
-                
-                // RPC request fires transaction processing routine automatically
-                const { data: generatedSaleId, error } = await supabaseClient.rpc('process_complete_sale', {
-                    cart: cartPayload,
-                    payments_list: paymentsPayload,
-                    current_staff_id: parseInt(localStorage.getItem('active_staff_id')) || 1, 
-                    current_shift_id: null,
-                    current_customer_id: null
-                });
+                let itemsToProcess = [];
 
-                if (error) throw new Error(error.message);
+                if (matchedItem.is_serialized) {
+                    // AUTOMATION STAGE: Find the oldest available IMEIs corresponding to this product
+                    const { data: availableImeis, error: fetchError } = await supabaseClient
+                        .from('serialized_items')
+                        .select('id, imei_or_serial')
+                        .eq('product_id', targetId)
+                        .eq('status', 'Available')
+                        .order('created_at', { ascending: true })
+                        .limit(qty);
 
-                addLog(`💵 Success! Sale records saved seamlessly.`);
-                addLog(`📄 Invoice Generated: #INV-${generatedSaleId}`);
-                addLog(`📦 Stock records updated in system profiles.`);
-                addLog(`🔀 Launching receipt router engine...`);
+                    if (fetchError) throw fetchError;
+                    if (!availableImeis || availableImeis.length < qty) {
+                        throw new Error(`Out of stock! This phone only has ${availableImeis ? availableImeis.length : 0} tracking IMEI(s) remaining in the system.`);
+                    }
 
-                // Force the browser to open the beautiful receipt view automatically after 1.5 seconds
-                setTimeout(() => { 
-                    window.location.href = `receipt.html?id=${generatedSaleId}`; 
-                }, 1500);
+                    // Extract database row IDs to flag them down as sold
+                    const imeiIdsToUpdate = availableImeis.map(item => item.id);
+                    
+                    const { error: patchError } = await supabaseClient
+                        .from('serialized_items')
+                        .update({ status: 'Sold' })
+                        .in('id', imeiIdsToUpdate);
 
-            } catch(err) {
-                addLog(`Transaction processing execution halted!`, true);
-                addLog(`Error Context: ${err.message}`, true);
-            } finally {
+                    if (patchError) throw patchError;
+                    
+                    // Cache string representations of the auto-assigned serial lines
+                    itemsToProcess = availableImeis.map(item => item.imei_or_serial);
+
+                } else {
+                    // Bulk accessory inventory deduction loop
+                    if (matchedItem.bulk_stock_quantity < qty) {
+                        throw new Error(`Insufficient stock levels! Only ${matchedItem.bulk_stock_quantity} units left.`);
+                    }
+
+                    const newBulkQty = matchedItem.bulk_stock_quantity - qty;
+                    const { error: bulkError } = await supabaseClient
+                        .from('products')
+                        .update({ bulk_stock_quantity: newBulkQty })
+                        .eq('id', targetId);
+
+                    if (bulkError) throw bulkError;
+                    matchedItem.bulk_stock_quantity = newBulkQty;
+                }
+
+                // Compile fiscal pricing margins metrics
+                const netAmount = (matchedItem.selling_price * qty) - discount;
+                const totalCostBasis = matchedItem.cost_price * qty;
+                const profitGenerated = netAmount - totalCostBasis;
+                const generatedInvoiceRef = `INV-${Math.floor(100000 + Math.random() * 900000)}`;
+
+                // Insert structural record entry logs into master database analytics tables
+                const { data: newSaleRecord, error: saleError } = await supabaseClient
+                    .from('sales')
+                    .insert([{
+                        invoice_number: generatedInvoiceRef,
+                        net_amount: netAmount,
+                        profit_generated: profitGenerated,
+                        payment_method: method,
+                        staff_id: parseInt(localStorage.getItem('active_staff_id'))
+                    }])
+                    .select()
+                    .single();
+
+                if (saleError) throw saleError;
+
+                // Push workflow navigation views down to receipt viewport directly
+                window.location.href = `receipt.html?id=${newSaleRecord.id}`;
+
+            } catch (err) {
+                alert(`Checkout Interrupted: ${err.message}`);
                 checkoutBtn.disabled = false;
+                checkoutBtn.textContent = "🛒 Checkout";
             }
         });
+
+        window.addEventListener('DOMContentLoaded', loadTerminalCatalog);
     </script>
 </body>
 </html>
