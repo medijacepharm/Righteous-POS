@@ -1,193 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Righteous POS - Sales Logs</title>
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <style>
-    .topbar {
-      background: #111827;
-      padding: 15px;
-      text-align: justify;
-      font-size: 22px;
-      color: #fbbf24;
-      font-weight: bold;
-    }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 4px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Righteous POS - Sales Log</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col font-sans antialiased">
+<body class="bg-gray-100 text-gray-900 font-sans antialiased">
 
-  <div class="topbar flex justify-between items-center px-6 shadow-md">
-    <div>
-      <span>Righteous Phones & Accessories</span>
-    </div>
-    <div class="flex gap-4 text-sm font-medium text-gray-300 items-center">
-      <a href="dashboard.html" class="hover:text-amber-400 transition">Checkout</a>
-      <a href="products.html" class="hover:text-amber-400 transition">Inventory Manager</a>
-      <a href="sales.html" class="text-amber-400 border-b-2 border-amber-400 pb-1">Sales Logs</a>
-      <span class="text-gray-600">|</span>
-      <a href="#" onclick="triggerLogout(event)" class="text-rose-400 hover:text-rose-500 transition font-bold">Log Out</a>
-    </div>
-  </div>
-
-  <div class="bg-white border-b px-8 py-6 shadow-sm grid grid-cols-4 gap-6">
-    <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
-      <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Gross Accumulated Revenue</p>
-      <p id="sales-total-revenue" class="text-2xl font-black text-gray-900 mt-1">$0.00</p>
-    </div>
-    <div class="p-4 bg-amber-50/50 rounded-xl border border-amber-100">
-      <p class="text-xs font-bold text-amber-700 uppercase tracking-wider">Mobile Money (MoMo)</p>
-      <p id="sales-momo-revenue" class="text-2xl font-black text-amber-600 mt-1">$0.00</p>
-    </div>
-    <div class="p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
-      <p class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Hard Cash Counter</p>
-      <p id="sales-cash-revenue" class="text-2xl font-black text-emerald-600 mt-1">$0.00</p>
-    </div>
-    <div class="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
-      <p class="text-xs font-bold text-blue-700 uppercase tracking-wider">Bank Card Swipes</p>
-      <p id="sales-card-revenue" class="text-2xl font-black text-blue-600 mt-1">$0.00</p>
-    </div>
-  </div>
-
-  <div class="flex-1 p-8 overflow-hidden h-[calc(100vh-160px)] max-w-5xl w-full mx-auto">
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
-      
-      <div class="p-5 border-b bg-gray-50 flex justify-between items-center">
-        <div>
-          <h2 class="font-bold text-gray-800 text-sm">Historical Audit Trail</h2>
-          <p class="text-xs text-gray-400 mt-0.5">Chronological record of completed point-of-sale invoices</p>
+    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="max-w-xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-wide">📊 Sales Ledger</h1>
+            <a href="dashboard.html?v=rebuild2026" class="bg-blue-700 text-xs px-3 py-1 rounded-full font-semibold">↩ Go to POS</a>
         </div>
-        <span id="sales-sync-status" class="text-xs text-amber-600 font-semibold hidden">Querying records...</span>
-      </div>
+    </header>
 
-      <div class="overflow-y-auto flex-1 custom-scrollbar">
-        <table class="w-full text-left text-xs text-gray-600">
-          <thead class="bg-gray-100 text-gray-500 uppercase font-mono border-b sticky top-0 z-10">
-            <tr>
-              <th class="p-4">Invoice ID</th>
-              <th class="p-4">Timestamp</th>
-              <th class="p-4">Payment Channel</th>
-              <th class="p-4 text-right">Settled Amount</th>
-            </tr>
-          </thead>
-          <tbody id="sales-tbody" class="divide-y">
-            </tbody>
-        </table>
-      </div>
-      
-    </div>
-  </div>
-
-  <script>
-    const SUPABASE_URL = 'https://ezdpxjjzemtxbmjyjmfi.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_ddxoPTFqgbR2pNgQBzY_aA_OeldolSz';
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // --- SECURE AUTHENTICATION GUARD CRADLE ---
-    async function enforceSecurityGuard() {
-      const { data: { session }, error } = await _supabase.auth.getSession();
-      
-      // If no live session is detected, redirect immediately to login portal
-      if (!session || error) {
-        window.location.href = 'login.html';
-      } else {
-        // Run database queries safely now that user identity is validated
-        loadSalesLedger();
-      }
-    }
-    // Invoke checkpoint checks on engine ignition
-    enforceSecurityGuard();
-    // ------------------------------------------
-
-    async function loadSalesLedger() {
-      document.getElementById('sales-sync-status').classList.remove('hidden');
-
-      const { data: salesLogs, error } = await _supabase
-        .from('sales')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        alert("Ledger synchronization failed: " + error.message);
-        return;
-      }
-
-      renderSalesTable(salesLogs || []);
-      calculateRevenueSplits(salesLogs || []);
-      document.getElementById('sales-sync-status').classList.add('hidden');
-    }
-
-    function renderSalesTable(logs) {
-      const tbody = document.getElementById('sales-tbody');
-      
-      if (logs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-400">No invoices have been logged today. Run transactions through checkout.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = logs.map(sale => {
-        const dateObj = new Date(sale.created_at);
-        const formattedDate = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    <main class="max-w-xl mx-auto p-4 space-y-4 pb-12">
         
-        let badgeStyle = "bg-gray-100 text-gray-800";
-        if (sale.payment_method === 'Mobile Money') badgeStyle = "bg-amber-100 text-amber-800";
-        if (sale.payment_method === 'Card') badgeStyle = "bg-blue-100 text-blue-800";
-        if (sale.payment_method === 'Cash') badgeStyle = "bg-emerald-100 text-emerald-800";
+        <div class="grid grid-cols-2 gap-4">
+            <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-200">
+                <span class="text-[10px] uppercase font-bold tracking-wider text-gray-400 block">Total Revenue</span>
+                <p id="totalRevenue" class="text-xl font-extrabold text-gray-900">GHS 0.00</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-200">
+                <span class="text-[10px] uppercase font-bold tracking-wider text-gray-400 block text-emerald-600">Net Profit</span>
+                <p id="totalProfit" class="text-xl font-extrabold text-emerald-600">GHS 0.00</p>
+            </div>
+        </div>
 
-        return `
-          <tr class="hover:bg-gray-50/70 transition">
-            <td class="p-4 font-mono text-gray-400 font-medium">#${sale.id.substring(0, 8)}...</td>
-            <td class="p-4 font-medium text-gray-700">${formattedDate}</td>
-            <td class="p-4">
-              <span class="inline-block px-2.5 py-1 rounded-md text-[11px] font-bold tracking-tight ${badgeStyle}">
-                ${sale.payment_method}
-              </span>
-            </td>
-            <td class="p-4 text-right font-mono font-black text-gray-900 text-sm">$${Number(sale.total_amount).toFixed(2)}</td>
-          </tr>
-        `;
-      }).join('');
-    }
+        <div class="flex justify-between items-center pt-2">
+            <h2 class="text-sm font-bold uppercase text-gray-500">Transaction History</h2>
+            <span id="invoiceCount" class="text-xs font-mono bg-gray-200 text-gray-700 px-2 py-0.5 rounded-sm">0 trades</span>
+        </div>
 
-    function calculateRevenueSplits(logs) {
-      let total = 0;
-      let momo = 0;
-      let cash = 0;
-      let card = 0;
+        <div class="space-y-3" id="salesFeedContainer">
+            <div class="text-center py-8 text-gray-400 text-sm font-mono">> Fetching live financial ledger entries...</div>
+        </div>
 
-      logs.forEach(sale => {
-        const amt = parseFloat(sale.total_amount) || 0;
-        total += amt;
-        if (sale.payment_method === 'Mobile Money') momo += amt;
-        if (sale.payment_method === 'Cash') cash += amt;
-        if (sale.payment_method === 'Card') card += amt;
-      });
+    </main>
 
-      document.getElementById('sales-total-revenue').innerText = `$${total.toFixed(2)}`;
-      document.getElementById('sales-momo-revenue').innerText = `$${momo.toFixed(2)}`;
-      document.getElementById('sales-cash-revenue').innerText = `$${cash.toFixed(2)}`;
-      document.getElementById('sales-card-revenue').innerText = `$${card.toFixed(2)}`;
-    }
+    <script>
+        // SESSION GUARD: Kick unauthenticated users back to the lock screen instantly
+        if (!localStorage.getItem('active_staff_id')) {
+            window.location.href = 'login.html';
+        }
 
-    // Session Termination Flow
-    async function triggerLogout(e) {
-      e.preventDefault();
-      const confirmLog = confirm("Are you sure you want to log out of the POS system?");
-      if (!confirmLog) return;
-      
-      await _supabase.auth.signOut();
-      window.location.href = 'login.html';
-    }
-  </script>
+        // Supabase Live Client Connection Core Configurations
+        const SUPABASE_URL = 'https://ezdpxjjzemtxbmjyjmfi.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6ZHB4amp6ZW10eGJtanlqbWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzY5NDYsImV4cCI6MjA5NzM1Mjk0Nn0.ADcwJuefJxBC2h4iQHsTZ_Nixmlql_cGgGTIucxxgDw';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const feedContainer = document.getElementById('salesFeedContainer');
+        const revenueText = document.getElementById('totalRevenue');
+        const profitText = document.getElementById('totalProfit');
+        const countBadge = document.getElementById('invoiceCount');
+
+        async function fetchSalesLedgerEngine() {
+            try {
+                // Fetch sales rows in reverse chronological order
+                const { data: salesHistory, error } = await supabaseClient
+                    .from('sales')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (!salesHistory || salesHistory.length === 0) {
+                    feedContainer.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm font-mono">> No sales processed yet. Get caching!</div>`;
+                    return;
+                }
+
+                // Reset calculations counters
+                let aggregatedRevenue = 0;
+                let aggregatedProfit = 0;
+                feedContainer.innerHTML = '';
+
+                countBadge.textContent = `${salesHistory.length} sales`;
+
+                salesHistory.forEach(sale => {
+                    aggregatedRevenue += parseFloat(sale.net_amount);
+                    aggregatedProfit += parseFloat(sale.profit_generated);
+
+                    // Clean timestamp presentation format
+                    const timestamp = new Date(sale.created_at);
+                    const formattedTime = timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const formattedDate = timestamp.toLocaleDateString([], {month: 'short', day: 'numeric'});
+
+                    // Select badge color depending on payment type
+                    const methodColor = sale.payment_method === 'Cash' 
+                        ? 'bg-amber-100 text-amber-800 border-amber-200' 
+                        : 'bg-purple-100 text-purple-800 border-purple-200';
+
+                    const cardHtml = `
+                        <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-200 space-y-3">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="font-mono font-bold text-gray-800 text-sm">${sale.invoice_number}</span>
+                                    <span class="text-[10px] text-gray-400 block mt-0.5">${formattedDate} at ${formattedTime}</span>
+                                </div>
+                                <span class="px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wide ${methodColor}">
+                                    ${sale.payment_method}
+                                </span>
+                            </div>
+
+                            <div class="pt-2 border-t border-gray-100 flex justify-between items-center text-xs">
+                                <div>
+                                    <span class="text-[9px] block uppercase font-medium text-gray-400">Collected Total</span>
+                                    <span class="font-extrabold text-gray-900 text-sm">GHS ${parseFloat(sale.net_amount).toFixed(2)}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[9px] block uppercase font-medium text-gray-400 text-emerald-600">Net Profit Margin</span>
+                                    <span class="font-bold text-emerald-600 text-sm">+GHS ${parseFloat(sale.profit_generated).toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    feedContainer.innerHTML += cardHtml;
+                });
+
+                // Render dynamic total balances back up onto summary widgets
+                revenueText.textContent = `GHS ${aggregatedRevenue.toFixed(2)}`;
+                profitText.textContent = `GHS ${aggregatedProfit.toFixed(2)}`;
+
+            } catch (err) {
+                feedContainer.innerHTML = `<div class="text-center py-8 text-red-400 text-sm font-mono">> Audit Engine Error: ${err.message}</div>`;
+            }
+        }
+
+        // Auto trigger compilation loops on initialization load states
+        window.addEventListener('DOMContentLoaded', fetchSalesLedgerEngine);
+    </script>
 </body>
 </html>

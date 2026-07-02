@@ -1,81 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Righteous POS - Portal Login</title>
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Righteous POS - Terminal Lock</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-900 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-950 text-gray-100 font-sans antialiased h-screen flex flex-col justify-center items-center p-4">
 
-  <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100">
-    <div class="text-center mb-6">
-      <h1 class="text-xl font-black text-gray-900 tracking-tight">Righteous Phones</h1>
-      <p class="text-xs text-gray-400 mt-1 uppercase font-bold tracking-wider">Management Authentication</p>
+    <div class="w-full max-w-sm bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-2xl space-y-6 text-center">
+        
+        <div class="space-y-1">
+            <span class="text-4xl">🔒</span>
+            <h1 class="text-xl font-black uppercase tracking-wider text-white">Righteous POS</h1>
+            <p class="text-xs text-gray-500">Terminal Gate · Access Restricted</p>
+        </div>
+
+        <div id="loadingState" class="text-sm font-mono text-gray-400 py-4">
+            > Linking terminal profile metrics...
+        </div>
+
+        <form id="loginForm" class="hidden space-y-4 text-left">
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-400 tracking-wider mb-1.5">Select Account</label>
+                <select id="staffSelect" class="w-full p-3 bg-gray-800 border border-gray-700 rounded-xl text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                    </select>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-400 tracking-wider mb-1.5">Terminal Access ID</label>
+                <input type="password" id="staffIdInput" placeholder="Enter your Staff ID (e.g. 1)" class="w-full p-3 bg-gray-800 border border-gray-700 rounded-xl text-center text-gray-200 font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-98 transition text-white py-3 px-4 rounded-xl font-bold text-sm tracking-wide shadow-lg cursor-pointer mt-2">
+                🔓 Unlock Terminal Dashboard
+            </button>
+        </form>
+
+        <div id="errorMessage" class="hidden text-xs font-semibold text-red-400 bg-red-950/50 border border-red-900 p-2.5 rounded-lg font-mono">
+            </div>
+
     </div>
 
-    <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
-      <div>
-        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Address</label>
-        <input type="email" id="login-email" required placeholder="manager@righteous.com" class="w-full p-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none" />
-      </div>
+    <script>
+        // Supabase Live Client Connection Core Configurations
+        const SUPABASE_URL = 'https://ezdpxjjzemtxbmjyjmfi.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6ZHB4amp6ZW10eGJtanlqbWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzY5NDYsImV4cCI6MjA5NzM1Mjk0Nn0.ADcwJuefJxBC2h4iQHsTZ_Nixmlql_cGgGTIucxxgDw';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      <div>
-        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
-        <input type="password" id="login-password" required placeholder="••••••••" class="w-full p-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none" />
-      </div>
+        const loadingText = document.getElementById('loadingState');
+        const form = document.getElementById('loginForm');
+        const staffSelect = document.getElementById('staffSelect');
+        const idInput = document.getElementById('staffIdInput');
+        const errorBox = document.getElementById('errorMessage');
 
-      <div id="error-message" class="text-xs font-semibold text-rose-500 bg-rose-50 p-2.5 rounded-lg hidden"></div>
+        // Fetch registered staff lists down from database tables
+        async function loadActiveProfiles() {
+            try {
+                const { data: staffList, error } = await supabaseClient
+                    .from('staff')
+                    .select('id, first_name, last_name, role')
+                    .eq('is_active', true);
 
-      <button type="submit" id="login-btn" class="w-full py-3.5 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-xl shadow-md transition text-sm uppercase tracking-wide cursor-pointer">
-        Secure Login
-      </button>
-    </form>
-  </div>
+                if (error) throw error;
 
-  <script>
-    const SUPABASE_URL = 'https://ezdpxjjzemtxbmjyjmfi.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_ddxoPTFqgbR2pNgQBzY_aA_OeldolSz';
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                staffSelect.innerHTML = staffList.map(member => `
+                    <option value="${member.id}">
+                        ${member.first_name} ${member.last_name} (${member.role})
+                    </option>
+                `).join('');
 
-    // Bypasses the login form completely if a valid user session is already saved in the browser cache
-    window.addEventListener('DOMContentLoaded', async () => {
-      const { data: { session } } = await _supabase.auth.getSession();
-      if (session) {
-        window.location.href = 'dashboard.html';
-      }
-    });
+                loadingText.classList.add('hidden');
+                form.classList.remove('hidden');
 
-    // Handles the outbound email/password submission pipeline
-    async function handleLogin(e) {
-      e.preventDefault();
-      const btn = document.getElementById('login-btn');
-      const errorDiv = document.getElementById('error-message');
-      
-      btn.disabled = true;
-      btn.innerText = "Authenticating...";
-      errorDiv.classList.add('hidden');
+            } catch (err) {
+                loadingText.textContent = `🚨 Connection Error: ${err.message}`;
+            }
+        }
 
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
+        // Validate and log staff user row context parameters into browser session storage
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            errorBox.classList.add('hidden');
 
-      const { data, error } = await _supabase.auth.signInWithPassword({
-        email: email,
-        password: password
-      });
+            const chosenStaffId = staffSelect.value;
+            const inputtedId = idInput.value.trim();
 
-      if (error) {
-        // Expose exact authentication failure parameters to the layout interface
-        errorDiv.innerText = error.message;
-        errorDiv.classList.remove('hidden');
-        btn.disabled = false;
-        btn.innerText = "Secure Login";
-      } else {
-        // Direct safe passage forward into the core transaction engine
-        window.location.href = 'dashboard.html';
-      }
-    }
-  </script>
+            // Security Validation check verifying staff confirms their operational index ID
+            if (chosenStaffId !== inputtedId) {
+                errorBox.textContent = "❌ Invalid Account Access ID. Please verify your system credentials.";
+                errorBox.classList.remove('hidden');
+                return;
+            }
+
+            const chosenText = staffSelect.options[staffSelect.selectedIndex].text;
+
+            // Cache data parameters into memory
+            localStorage.setItem('active_staff_id', chosenStaffId);
+            localStorage.setItem('active_staff_name', chosenText);
+
+            // Bounce directly to checkout controls
+            window.location.href = "dashboard.html?v=rebuild2026";
+        });
+
+        window.addEventListener('DOMContentLoaded', loadActiveProfiles);
+    </script>
 </body>
 </html>

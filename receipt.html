@@ -1,100 +1,133 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Receipt - Righteous POS</title>
-
-  <style>
-    body {
-      font-family: Arial;
-      background: #fff;
-      color: #000;
-      padding: 20px;
-    }
-
-    .receipt {
-      max-width: 300px;
-      margin: auto;
-      border: 1px dashed #000;
-      padding: 10px;
-    }
-
-    h2 {
-      text-align: center;
-      margin: 0;
-    }
-
-    .info {
-      font-size: 12px;
-      text-align: center;
-      margin-bottom: 10px;
-    }
-
-    .item {
-      border-bottom: 1px dashed #ccc;
-      padding: 5px 0;
-      font-size: 13px;
-    }
-
-    .total {
-      font-weight: bold;
-      text-align: right;
-      margin-top: 10px;
-    }
-
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      background: black;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    @media print {
-      button {
-        display: none;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Righteous POS - Receipt</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @media print {
+            body { background: white; color: black; }
+            .no-print { display: none !important; }
+            .print-card { border: none !important; shadow: none !important; max-w: 100% !important; padding: 0 !important; }
+        }
+    </style>
 </head>
+<body class="bg-gray-100 text-gray-900 font-sans antialiased min-h-screen flex flex-col items-center p-4 justify-center">
 
-<body>
+    <div id="receiptCard" class="w-full max-w-sm bg-white border border-gray-200 p-6 rounded-2xl shadow-xl space-y-6 print-card">
+        
+        <div class="text-center space-y-1">
+            <h1 class="text-2xl font-black uppercase tracking-wider text-gray-900">Righteous POS</h1>
+            <p class="text-xs text-gray-500 font-medium">Digital Retail Hub · Ghana</p>
+            <div class="text-[11px] font-mono text-gray-400 pt-1 border-b border-dashed border-gray-300 pb-3" id="receiptTimestamp">
+                Loading transaction timestamps...
+            </div>
+        </div>
 
-<div class="receipt">
+        <div class="space-y-2 text-xs font-mono">
+            <div class="flex justify-between">
+                <span class="text-gray-400">Invoice Ref:</span>
+                <span id="receiptInvoiceNum" class="font-bold text-gray-800">#INV-0000</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-400">Payment Gateway:</span>
+                <span id="receiptPaymentMethod" class="font-bold text-gray-800">...</span>
+            </div>
+            <div class="flex justify-between border-b border-dashed border-gray-300 pb-4">
+                <span class="text-gray-400">Operator Session:</span>
+                <span id="receiptCashier" class="font-bold text-gray-800">...</span>
+            </div>
+        </div>
 
-  <h2>Righteous POS</h2>
-  <div class="info">
-    Asante Akyem Agogo <br>
-    Tel: 0240416413 / 0248662358
-  </div>
+        <div class="space-y-2">
+            <div class="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-150">
+                <span class="text-xs font-bold uppercase text-gray-500 tracking-wide">Total Collected</span>
+                <span id="receiptTotalAmount" class="text-xl font-black text-gray-900">GHS 0.00</span>
+            </div>
+        </div>
 
-  <div id="items"></div>
+        <div class="text-center space-y-1 py-1">
+            <div class="text-emerald-600 font-bold text-sm flex items-center justify-center gap-1">
+                <span>✅</span> Transaction Verified Secure
+            </div>
+            <p class="text-[10px] text-gray-400">Thank you for shopping with us!</p>
+        </div>
 
-  <div class="total" id="total"></div>
+        <div class="grid grid-cols-2 gap-3 pt-2 no-print">
+            <button onclick="window.print()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-bold text-xs transition cursor-pointer text-center">
+                🖨 Print Paper
+            </button>
+            <a href="dashboard.html?v=rebuild2026" class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl font-bold text-xs transition text-center shadow-md">
+                🔄 New Sale
+            </a>
+        </div>
 
-  <button onclick="window.print()">Print Receipt</button>
-
-</div>
-
-<script>
-const sale = JSON.parse(localStorage.getItem("lastSale"));
-
-let html = "";
-let total = 0;
-
-sale.items.forEach(i => {
-  html += `
-    <div class="item">
-      ${i.name} x ${i.qty} = GH₵ ${i.total}
     </div>
-  `;
-  total += i.total;
-});
 
-document.getElementById("items").innerHTML = html;
-document.getElementById("total").innerText = "Total: GH₵ " + total;
-</script>
+    <div id="errorFallback" class="hidden w-full max-w-sm bg-red-50 border border-red-200 p-4 rounded-xl text-center text-red-700 font-mono text-xs">
+        </div>
 
+    <script>
+        // SESSION GUARD: Kick unauthenticated users back to the lock screen instantly
+        if (!localStorage.getItem('active_staff_id')) {
+            window.location.href = 'login.html';
+        }
+
+        // Supabase Live Client Connection Core Configurations
+        const SUPABASE_URL = 'https://ezdpxjjzemtxbmjyjmfi.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6ZHB4amp6ZW10eGJtanlqbWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzY5NDYsImV4cCI6MjA5NzM1Mjk0Nn0.ADcwJuefJxBC2h4iQHsTZ_Nixmlql_cGgGTIucxxgDw';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function processReceiptEngine() {
+            // 1. Read the specific transaction ID out of the browser URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const saleId = urlParams.get('id');
+
+            if (!saleId) {
+                showError("Terminal failure: System reference pointer ID parameters are missing from URL link.");
+                return;
+            }
+
+            try {
+                // 2. Fetch specific transaction row context down from Database
+                const { data: sale, error } = await supabaseClient
+                    .from('sales')
+                    .select('*')
+                    .eq('id', saleId)
+                    .single();
+
+                if (error) throw error;
+                if (!sale) throw new Error("The specified invoice reference row could not be located inside system archives.");
+
+                // 3. Clean up raw timestamps into presentable format
+                const dateObj = new Date(sale.created_at);
+                const readableDate = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+                const readableTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                // 4. Paint transaction data points onto the receipt layout elements
+                document.getElementById('receiptTimestamp').textContent = `${readableDate} at ${readableTime}`;
+                document.getElementById('receiptInvoiceNum').textContent = sale.invoice_number;
+                document.getElementById('receiptPaymentMethod').textContent = sale.payment_method;
+                document.getElementById('receiptTotalAmount').textContent = `GHS ${parseFloat(sale.net_amount).toFixed(2)}`;
+                
+                // Read current operator parameters out of system storage
+                document.getElementById('receiptCashier').textContent = localStorage.getItem('active_staff_name') || 'System Master';
+
+            } catch (err) {
+                showError(`Failed to load receipt metrics: ${err.message}`);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('receiptCard').classList.add('hidden');
+            const errBox = document.getElementById('errorFallback');
+            errBox.textContent = message;
+            errBox.classList.remove('hidden');
+        }
+
+        window.addEventListener('DOMContentLoaded', processReceiptEngine);
+    </script>
 </body>
 </html>
